@@ -165,6 +165,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbztQKJ7aD7jW4K4Si54XOCB
 
 let ADMIN_TOKEN = localStorage.getItem('vmw_admin_token') || null;
 let EXECUTIVES = [];
+let LENDERS = [];
 let ALL_APPLICATIONS = [];
 
 const STATUS_OPTIONS = ['Draft', 'Submitted', 'Under Review', 'Docs Pending', 'Sanctioned', 'Disbursed', 'Rejected'];
@@ -247,6 +248,7 @@ function enterAdminApp() {
   adminApp.style.display = 'block';
   logoutLink.style.display = 'inline';
   loadExecutives();
+  loadLendersList();
   loadApplications('');
 }
 
@@ -256,6 +258,12 @@ function enterAdminApp() {
 function loadExecutives() {
   callApi({ action: 'adminGetExecutives' }).then(function (response) {
     if (response.success) EXECUTIVES = response.data.executives || [];
+  });
+}
+
+function loadLendersList() {
+  callApi({ action: 'adminGetLenders' }).then(function (response) {
+    if (response.success) LENDERS = response.data.lenders || [];
   });
 }
 
@@ -377,17 +385,26 @@ function buildDetailHtml(app, index) {
     return '<option value="' + ex.Name + '"' + (ex.Name === app.Assigned_Executive ? ' selected' : '') + '>' + ex.Name + '</option>';
   }).join('');
 
+  const currentBanks = (app.Assigned_Bank || '').split(',').map(function (b) { return b.trim(); }).filter(Boolean);
+
+  const lenderChecklistHtml = LENDERS.length === 0
+    ? '<div style="font-size:0.82rem;color:var(--grey-mid);">No lenders added yet — add them in the Lenders sheet tab.</div>'
+    : '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + LENDERS.map(function (l, i) {
+        const checked = currentBanks.indexOf(l.Lender_Name) !== -1 ? ' checked' : '';
+        return (
+          '<label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;border:1px solid var(--border-light);border-radius:999px;padding:6px 12px;cursor:pointer;">' +
+            '<input type="checkbox" class="lenderCheck_' + index + '" value="' + l.Lender_Name + '"' + checked + '>' +
+            l.Lender_Name +
+          '</label>'
+        );
+      }).join('') + '</div>';
+
   return (
     '<div class="detail-grid">' + infoHtml + '</div>' +
 
     '<div class="action-panel">' +
       '<h4>Documents</h4>' +
       '<div id="docsPanel_' + index + '"><button class="btn btn-secondary btn-small" onclick="loadDocuments(' + index + ')">Load Documents</button></div>' +
-    '</div>' +
-
-    '<div class="action-panel">' +
-      '<h4>Lenders</h4>' +
-      '<div id="lendersPanel_' + index + '"><button class="btn btn-secondary btn-small" onclick="loadLenders(' + index + ')">Load Lenders</button></div>' +
     '</div>' +
 
     '<div class="action-panel">' +
@@ -399,12 +416,10 @@ function buildDetailHtml(app, index) {
     '</div>' +
 
     '<div class="action-panel">' +
-      '<h4>Assign Executive / Bank</h4>' +
-      '<div class="action-row">' +
-        '<div class="form-group"><select id="execSelect_' + index + '">' + execOptionsHtml + '</select></div>' +
-        '<div class="form-group"><input type="text" id="bankInput_' + index + '" placeholder="Bank / NBFC name" value="' + (app.Assigned_Bank || '') + '"></div>' +
-        '<button class="btn btn-primary btn-small" onclick="updateAssignment(' + index + ')">Save Assignment</button>' +
-      '</div>' +
+      '<h4>Assign Executive / Lender(s)</h4>' +
+      '<div class="form-group" style="margin-bottom:14px;"><select id="execSelect_' + index + '">' + execOptionsHtml + '</select></div>' +
+      '<div style="margin-bottom:14px;">' + lenderChecklistHtml + '</div>' +
+      '<button class="btn btn-primary btn-small" onclick="updateAssignment(' + index + ')">Save Assignment</button>' +
     '</div>' +
 
     '<div class="action-panel">' +
@@ -418,87 +433,6 @@ function buildDetailHtml(app, index) {
 /* ============================================================
    ADMIN ACTIONS
    ============================================================ */
-const LENDER_STATUS_OPTIONS = ['Submitted', 'Under Review', 'Sanctioned', 'Rejected', 'Disbursed'];
-
-function loadLenders(index) {
-  const app = ALL_APPLICATIONS[index];
-  const panel = document.getElementById('lendersPanel_' + index);
-  panel.innerHTML = '<span style="font-size:0.85rem;color:var(--grey-mid);">Loading...</span>';
-
-  callApi({ action: 'adminGetLenders', applicationId: app.Application_ID }).then(function (response) {
-    if (!response.success) {
-      panel.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">' + (response.error || 'Could not load lenders.') + '</span>';
-      return;
-    }
-    renderLendersPanel(index, response.data.lenders || []);
-  }).catch(function () {
-    panel.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">Connection issue.</span>';
-  });
-}
-
-function renderLendersPanel(index, lenders) {
-  const panel = document.getElementById('lendersPanel_' + index);
-
-  const rowsHtml = lenders.map(function (l, i) {
-    const statusOptionsHtml = LENDER_STATUS_OPTIONS.map(function (s) {
-      return '<option value="' + s + '"' + (s === l.Status ? ' selected' : '') + '>' + s + '</option>';
-    }).join('');
-
-    return (
-      '<div style="border:1px solid var(--border-light);border-radius:8px;padding:12px;margin-bottom:10px;">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">' +
-          '<strong style="font-size:0.9rem;color:var(--navy);">' + l.Lender_Name + '</strong>' +
-          '<span class="status-badge ' + statusClass(l.Status) + '">' + l.Status + '</span>' +
-        '</div>' +
-        '<div class="action-row">' +
-          '<div class="form-group"><select id="lenderStatus_' + index + '_' + i + '">' + statusOptionsHtml + '</select></div>' +
-          '<div class="form-group"><input type="text" id="lenderRemarks_' + index + '_' + i + '" placeholder="Remarks" value="' + (l.Remarks || '') + '"></div>' +
-          '<button class="btn btn-primary btn-small" onclick="updateLenderStatus(' + index + ',\'' + l.Lender_Name.replace(/'/g, "\\'") + '\',' + i + ')">Update</button>' +
-        '</div>' +
-      '</div>'
-    );
-  }).join('');
-
-  const addFormHtml =
-    '<div class="action-row" style="margin-top:6px;">' +
-      '<div class="form-group"><input type="text" id="newLenderInput_' + index + '" placeholder="Lender name (e.g. HDFC Bank)"></div>' +
-      '<button class="btn btn-secondary btn-small" onclick="addLender(' + index + ')">+ Add Lender</button>' +
-    '</div>';
-
-  panel.innerHTML = (rowsHtml || '<div style="font-size:0.85rem;color:var(--grey-mid);margin-bottom:8px;">No lenders added yet.</div>') + addFormHtml;
-}
-
-function addLender(index) {
-  const app = ALL_APPLICATIONS[index];
-  const input = document.getElementById('newLenderInput_' + index);
-  const lenderName = input.value.trim();
-  if (!lenderName) { showToast('Enter a lender name.', true); return; }
-
-  callApi({ action: 'adminAddLender', applicationId: app.Application_ID, lenderName: lenderName }).then(function (response) {
-    if (response.success) {
-      showToast('Lender added.');
-      loadLenders(index);
-    } else {
-      showToast(response.error || 'Could not add lender.', true);
-    }
-  });
-}
-
-function updateLenderStatus(index, lenderName, i) {
-  const app = ALL_APPLICATIONS[index];
-  const status = document.getElementById('lenderStatus_' + index + '_' + i).value;
-  const remarks = document.getElementById('lenderRemarks_' + index + '_' + i).value.trim();
-
-  callApi({ action: 'adminUpdateLenderStatus', applicationId: app.Application_ID, lenderName: lenderName, status: status, remarks: remarks }).then(function (response) {
-    if (response.success) {
-      showToast('Lender status updated.');
-      loadLenders(index);
-    } else {
-      showToast(response.error || 'Update failed.', true);
-    }
-  });
-}
-
 function loadDocuments(index) {
   const app = ALL_APPLICATIONS[index];
   const panel = document.getElementById('docsPanel_' + index);
@@ -549,7 +483,8 @@ function updateStatus(index) {
 function updateAssignment(index) {
   const app = ALL_APPLICATIONS[index];
   const executive = document.getElementById('execSelect_' + index).value;
-  const bank = document.getElementById('bankInput_' + index).value.trim();
+  const checkedBoxes = document.querySelectorAll('.lenderCheck_' + index + ':checked');
+  const bank = Array.prototype.map.call(checkedBoxes, function (cb) { return cb.value; }).join(', ');
   callApi({ action: 'adminAssign', applicationId: app.Application_ID, executive: executive, bank: bank }).then(function (response) {
     if (response.success) {
       showToast('Assignment saved.');
