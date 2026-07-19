@@ -381,6 +381,11 @@ function buildDetailHtml(app, index) {
     '<div class="detail-grid">' + infoHtml + '</div>' +
 
     '<div class="action-panel">' +
+      '<h4>Documents</h4>' +
+      '<div id="docsPanel_' + index + '"><button class="btn btn-secondary btn-small" onclick="loadDocuments(' + index + ')">Load Documents</button></div>' +
+    '</div>' +
+
+    '<div class="action-panel">' +
       '<h4>Update Status</h4>' +
       '<div class="action-row">' +
         '<div class="form-group"><select id="statusSelect_' + index + '">' + statusOptionsHtml + '</select></div>' +
@@ -408,6 +413,39 @@ function buildDetailHtml(app, index) {
 /* ============================================================
    ADMIN ACTIONS
    ============================================================ */
+function loadDocuments(index) {
+  const app = ALL_APPLICATIONS[index];
+  const panel = document.getElementById('docsPanel_' + index);
+  panel.innerHTML = '<span style="font-size:0.85rem;color:var(--grey-mid);">Loading...</span>';
+
+  callApi({ action: 'adminGetDocuments', applicationId: app.Application_ID }).then(function (response) {
+    if (!response.success) {
+      panel.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">' + (response.error || 'Could not load documents.') + '</span>';
+      return;
+    }
+
+    const folderLinkHtml =
+      '<a href="' + response.data.folderUrl + '" target="_blank" rel="noopener" class="btn btn-secondary btn-small" style="margin-bottom:10px;display:inline-block;">Open Documents Folder ↗</a>';
+
+    const docs = response.data.documents || [];
+    let listHtml;
+    if (docs.length === 0) {
+      listHtml = '<div style="font-size:0.85rem;color:var(--grey-mid);">No documents uploaded yet.</div>';
+    } else {
+      listHtml = '<div style="display:flex;flex-direction:column;gap:6px;">' +
+        docs.map(function (d) {
+          return '<a href="' + d.url + '" target="_blank" rel="noopener" style="font-size:0.85rem;color:var(--royal-blue);font-weight:600;">' +
+            d.documentType + '</a>';
+        }).join('') +
+        '</div>';
+    }
+
+    panel.innerHTML = folderLinkHtml + listHtml;
+  }).catch(function () {
+    panel.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">Connection issue.</span>';
+  });
+}
+
 function updateStatus(index) {
   const app = ALL_APPLICATIONS[index];
   const status = document.getElementById('statusSelect_' + index).value;
