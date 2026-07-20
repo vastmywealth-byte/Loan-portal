@@ -64,7 +64,7 @@ main { padding: 40px 0 60px; }
 .status-Draft { background: #EDEFF3; color: var(--grey-mid); }
 .status-Submitted, .status-Under.Review { background: rgba(30,79,216,0.1); color: var(--royal-blue); }
 .status-Docs.Pending { background: rgba(245,166,35,0.12); color: #B67210; }
-.status-Sanctioned, .status-Disbursed { background: rgba(30,158,90,0.12); color: var(--success-green); }
+.status-Sanctioned, .status-Disbursed, .status-Approved { background: rgba(30,158,90,0.12); color: var(--success-green); }
 .status-Rejected { background: rgba(214,69,69,0.1); color: var(--error-red); }
 
 .next-step-box { background: var(--grey-bg); border-radius: var(--radius-sm); padding: 14px 16px; font-size: 0.9rem; margin: 14px 0; }
@@ -207,6 +207,19 @@ function renderResults(applications) {
     if (app.Remarks) detailsHtml += '<div class="result-detail-row"><span class="dlabel">Remarks</span><span class="dvalue">' + app.Remarks + '</span></div>';
     detailsHtml += '<div class="result-detail-row"><span class="dlabel">Last Updated</span><span class="dvalue">' + formatDate(app.Last_Updated) + '</span></div>';
 
+    let lendersHtml = '';
+    if (app.Lenders && app.Lenders.length > 0) {
+      lendersHtml = '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);">' +
+        '<h3 style="font-family:var(--font-display);font-size:0.85rem;color:var(--royal-blue);margin-bottom:8px;">Lender Status</h3>' +
+        app.Lenders.map(function (l) {
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:0.87rem;">' +
+            '<span>' + l.Lender_Name + '</span>' +
+            '<span class="status-badge ' + statusClass(l.Status) + '">' + l.Status + '</span>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+
     return (
       '<div class="result-card">' +
         '<div class="result-top">' +
@@ -218,6 +231,7 @@ function renderResults(applications) {
         '</div>' +
         '<div class="next-step-box"><strong>Next step:</strong> ' + app.Expected_Next_Step + '</div>' +
         detailsHtml +
+        lendersHtml +
         (timelineHtml ? '<div class="timeline"><h3>Status Timeline</h3>' + timelineHtml + '</div>' : '') +
       '</div>'
     );
