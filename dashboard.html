@@ -54,7 +54,7 @@ main { padding-bottom: 60px; }
 .status-Draft { background: #EDEFF3; color: var(--grey-mid); }
 .status-Submitted, .status-Under.Review { background: rgba(30,79,216,0.1); color: var(--royal-blue); }
 .status-Docs.Pending { background: rgba(245,166,35,0.12); color: #B67210; }
-.status-Sanctioned, .status-Disbursed { background: rgba(30,158,90,0.12); color: var(--success-green); }
+.status-Sanctioned, .status-Disbursed, .status-Approved { background: rgba(30,158,90,0.12); color: var(--success-green); }
 .status-Rejected { background: rgba(214,69,69,0.1); color: var(--error-red); }
 
 .progress-track-mini { height: 6px; background: var(--border-light); border-radius: 999px; overflow: hidden; margin: 10px 0 14px; }
@@ -191,6 +191,18 @@ function renderDashboard(applications) {
     }
     detailsHtml += '<div class="app-detail-row"><span class="dlabel">Last Updated</span><span class="dvalue">' + formatDate(app.Last_Updated) + '</span></div>';
 
+    let lendersHtml = '';
+    if (app.Lenders && app.Lenders.length > 0) {
+      lendersHtml = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-light);">' +
+        app.Lenders.map(function (l) {
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:0.85rem;">' +
+            '<span>' + l.Lender_Name + '</span>' +
+            '<span class="status-badge ' + statusClass(l.Status) + '">' + l.Status + '</span>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+
     const actionsHtml = isDraft
       ? '<a href="apply.html?applicationId=' + encodeURIComponent(app.Application_ID) + '" class="btn btn-primary btn-small">Continue Application</a>' +
         '<button class="btn btn-secondary btn-small no-print" onclick="window.print()">Download Acknowledgement</button>'
@@ -208,6 +220,7 @@ function renderDashboard(applications) {
         '</div>' +
         progressHtml +
         detailsHtml +
+        lendersHtml +
         '<div class="app-card-actions">' + actionsHtml + '</div>' +
       '</div>'
     );
