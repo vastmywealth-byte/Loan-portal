@@ -77,7 +77,7 @@ input, select, textarea { font-family: inherit; }
 .app-row-name { font-weight: 700; color: var(--navy); font-size: 0.95rem; }
 .app-row-sub { font-size: 0.8rem; color: var(--grey-mid); }
 .status-badge { font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 999px; white-space: nowrap; }
-.status-Draft { background: #EDEFF3; color: var(--grey-mid); }
+.status-Draft, .status-Closed { background: #EDEFF3; color: var(--grey-mid); }
 .status-Submitted, .status-Under.Review { background: rgba(30,79,216,0.1); color: var(--royal-blue); }
 .status-Docs.Pending { background: rgba(245,166,35,0.12); color: #B67210; }
 .status-Sanctioned, .status-Disbursed, .status-Approved { background: rgba(30,158,90,0.12); color: var(--success-green); }
@@ -168,7 +168,7 @@ let EXECUTIVES = [];
 let LENDERS = [];
 let ALL_APPLICATIONS = [];
 
-const STATUS_OPTIONS = ['Draft', 'Submitted', 'Under Review', 'Docs Pending', 'Sanctioned', 'Disbursed', 'Rejected'];
+const STATUS_OPTIONS = ['Draft', 'Submitted', 'Under Review', 'Docs Pending', 'Closed'];
 
 function callApi(payload) {
   if (ADMIN_TOKEN) payload.token = ADMIN_TOKEN;
