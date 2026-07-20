@@ -148,6 +148,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
         <button class="btn btn-secondary" id="searchBtn">Search</button>
       </div>
       <button class="btn btn-secondary" id="exportBtn">Export to CSV</button>
+      <button class="btn btn-secondary" id="dangerZoneToggle" style="border-color:var(--error-red);color:var(--error-red);">Delete Customer Data</button>
+    </div>
+
+    <div id="dangerZonePanel" style="display:none;background:#FFF5F5;border:1.5px solid var(--error-red);border-radius:var(--radius-md);padding:18px 20px;margin-bottom:20px;">
+      <h4 style="color:var(--error-red);font-family:var(--font-display);font-size:0.92rem;margin-bottom:6px;">⚠ Permanently Delete Customer Data</h4>
+      <p style="font-size:0.85rem;color:var(--grey-dark);margin-bottom:14px;">This removes ALL records for a customer — every application, document log, lender status, and lead — across the entire system. It cannot be undone.</p>
+      <div class="action-row">
+        <div class="form-group"><input type="tel" id="deleteMobileInput" placeholder="Customer's mobile number" maxlength="10"></div>
+        <div class="form-group"><input type="text" id="deletePanInput" placeholder="Customer's PAN" maxlength="10" style="text-transform:uppercase;"></div>
+        <button class="btn btn-small" style="background:var(--error-red);color:white;" id="confirmDeleteBtn">Permanently Delete</button>
+      </div>
     </div>
 
     <div class="summary-bar" id="summaryBar"></div>
@@ -584,6 +595,51 @@ document.getElementById('exportBtn').addEventListener('click', function () {
       return;
     }
     downloadCsv(response.data.applications);
+  });
+});
+
+document.getElementById('dangerZoneToggle').addEventListener('click', function () {
+  const panel = document.getElementById('dangerZonePanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+  const mobile = document.getElementById('deleteMobileInput').value.trim();
+  const pan = document.getElementById('deletePanInput').value.trim().toUpperCase();
+
+  if (!/^[6-9]\d{9}$/.test(mobile) || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {
+    showToast('Enter a valid mobile number and PAN.', true);
+    return;
+  }
+
+  const confirmed = window.confirm(
+    'This will PERMANENTLY delete every application, document, lender status, and lead for mobile ' + mobile + ' / PAN ' + pan + '.\n\nThis cannot be undone. Continue?'
+  );
+  if (!confirmed) return;
+
+  const btn = document.getElementById('confirmDeleteBtn');
+  btn.disabled = true;
+  btn.textContent = 'Deleting...';
+
+  callApi({ action: 'adminDeleteCustomer', mobile: mobile, pan: pan }).then(function (response) {
+    btn.disabled = false;
+    btn.textContent = 'Permanently Delete';
+
+    if (!response.success) {
+      showToast(response.error || 'Delete failed.', true);
+      return;
+    }
+
+    const d = response.data;
+    showToast('Deleted: ' + d.applicationsDeleted + ' application(s), ' + d.leadsDeleted + ' lead(s), ' + d.driveFoldersTrashed + ' Drive folder(s).');
+    document.getElementById('deleteMobileInput').value = '';
+    document.getElementById('deletePanInput').value = '';
+    document.getElementById('dangerZonePanel').style.display = 'none';
+    loadApplications(document.getElementById('searchInput').value.trim());
+  }).catch(function () {
+    btn.disabled = false;
+    btn.textContent = 'Permanently Delete';
+    showToast('Connection issue.', true);
   });
 });
 
