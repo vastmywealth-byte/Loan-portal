@@ -80,7 +80,7 @@ input, select, textarea { font-family: inherit; }
 .status-Draft { background: #EDEFF3; color: var(--grey-mid); }
 .status-Submitted, .status-Under.Review { background: rgba(30,79,216,0.1); color: var(--royal-blue); }
 .status-Docs.Pending { background: rgba(245,166,35,0.12); color: #B67210; }
-.status-Sanctioned, .status-Disbursed { background: rgba(30,158,90,0.12); color: var(--success-green); }
+.status-Sanctioned, .status-Disbursed, .status-Approved { background: rgba(30,158,90,0.12); color: var(--success-green); }
 .status-Rejected { background: rgba(214,69,69,0.1); color: var(--error-red); }
 
 .app-detail { display: none; padding: 18px 20px 22px; background: var(--grey-bg); border-top: 1px dashed var(--border-light); }
@@ -423,6 +423,11 @@ function buildDetailHtml(app, index) {
     '</div>' +
 
     '<div class="action-panel">' +
+      '<h4>Lender Status</h4>' +
+      '<div id="lenderStatusPanel_' + index + '"><button class="btn btn-secondary btn-small" onclick="loadLenderStatuses(' + index + ')">Load Lender Status</button></div>' +
+    '</div>' +
+
+    '<div class="action-panel">' +
       '<h4>Remarks</h4>' +
       '<div class="form-group"><textarea id="remarkInput_' + index + '" placeholder="Add a remark...">' + (app.Remarks || '') + '</textarea></div>' +
       '<button class="btn btn-primary btn-small" onclick="updateRemark(' + index + ')">Save Remark</button>' +
@@ -433,6 +438,67 @@ function buildDetailHtml(app, index) {
 /* ============================================================
    ADMIN ACTIONS
    ============================================================ */
+const LENDER_STATUS_OPTIONS = ['Submitted', 'Under Review', 'Approved', 'Sanctioned', 'Disbursed', 'Rejected'];
+
+function loadLenderStatuses(index) {
+  const app = ALL_APPLICATIONS[index];
+  const panel = document.getElementById('lenderStatusPanel_' + index);
+  panel.innerHTML = '<span style="font-size:0.85rem;color:var(--grey-mid);">Loading...</span>';
+
+  callApi({ action: 'adminGetLenderStatuses', applicationId: app.Application_ID }).then(function (response) {
+    if (!response.success) {
+      panel.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">' + (response.error || 'Could not load lender status.') + '</span>';
+      return;
+    }
+    renderLenderStatusPanel(index, response.data.lenders || []);
+  }).catch(function () {
+    panel.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">Connection issue.</span>';
+  });
+}
+
+function renderLenderStatusPanel(index, lenders) {
+  const panel = document.getElementById('lenderStatusPanel_' + index);
+
+  if (lenders.length === 0) {
+    panel.innerHTML = '<div style="font-size:0.85rem;color:var(--grey-mid);">No lenders assigned yet — check lenders above and Save Assignment first.</div>';
+    return;
+  }
+
+  const rowsHtml = lenders.map(function (l, i) {
+    const optionsHtml = LENDER_STATUS_OPTIONS.map(function (s) {
+      return '<option value="' + s + '"' + (s === l.Status ? ' selected' : '') + '>' + s + '</option>';
+    }).join('');
+
+    return (
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--border-light);">' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<strong style="font-size:0.88rem;color:var(--navy);min-width:110px;">' + l.Lender_Name + '</strong>' +
+          '<span class="status-badge ' + statusClass(l.Status) + '" id="lenderBadge_' + index + '_' + i + '">' + l.Status + '</span>' +
+        '</div>' +
+        '<select style="width:auto;padding:8px 10px;" id="lenderStatusSelect_' + index + '_' + i + '" onchange="saveLenderStatus(' + index + ',\'' + l.Lender_Name.replace(/'/g, "\\'") + '\',' + i + ')">' + optionsHtml + '</select>' +
+      '</div>'
+    );
+  }).join('');
+
+  panel.innerHTML = rowsHtml;
+}
+
+function saveLenderStatus(index, lenderName, i) {
+  const app = ALL_APPLICATIONS[index];
+  const status = document.getElementById('lenderStatusSelect_' + index + '_' + i).value;
+
+  callApi({ action: 'adminSetLenderStatus', applicationId: app.Application_ID, lenderName: lenderName, status: status }).then(function (response) {
+    if (response.success) {
+      showToast(lenderName + ' → ' + status);
+      const badge = document.getElementById('lenderBadge_' + index + '_' + i);
+      badge.textContent = status;
+      badge.className = 'status-badge ' + statusClass(status);
+    } else {
+      showToast(response.error || 'Update failed.', true);
+    }
+  });
+}
+
 function loadDocuments(index) {
   const app = ALL_APPLICATIONS[index];
   const panel = document.getElementById('docsPanel_' + index);
