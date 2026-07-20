@@ -186,7 +186,13 @@ const FORM_STEPS = [
       { name: 'DOB', label: 'Date of Birth', type: 'date', required: true },
       { name: 'Gender', label: 'Gender', type: 'select', options: ['Male', 'Female', 'Other'], required: true },
       { name: 'Marital_Status', label: 'Marital Status', type: 'select', options: ['Single', 'Married', 'Other'], required: true },
-      { name: 'Email', label: 'Email Address', type: 'email', required: true, full: true }
+      { name: 'Qualification', label: 'Qualification', type: 'text', required: true },
+      { name: 'Aadhaar_Number', label: 'Aadhaar Number', type: 'text', required: true },
+      { name: 'Personal_Email', label: 'Personal Email Address', type: 'email', required: true },
+      { name: 'Official_Email', label: 'Official Email Address', type: 'email', required: false },
+      { name: 'Mother_Name', label: "Mother's Name", type: 'text', required: true },
+      { name: 'Spouse_Name', label: "Spouse's Name (if married)", type: 'text', required: false },
+      { name: 'No_Of_Dependents', label: 'Number of Dependents', type: 'number', required: true }
     ]
   },
   {
@@ -195,7 +201,9 @@ const FORM_STEPS = [
       { name: 'Current_Address', label: 'Current Address', type: 'textarea', required: true, full: true },
       { name: 'Permanent_Address', label: 'Permanent Address', type: 'textarea', required: true, full: true },
       { name: 'Residence_Type', label: 'Residence Type', type: 'select', options: ['Owned', 'Rented', 'Company Provided', 'With Parents'], required: true },
-      { name: 'Years_At_Address', label: 'Years at Current Address', type: 'number', required: true }
+      { name: 'Years_At_Address', label: 'Years at Current Address', type: 'number', required: true },
+      { name: 'Residence_Tel_No', label: 'Residence Telephone No. (if any)', type: 'tel', required: false },
+      { name: 'Total_Years_At_City', label: 'Total Years at This City', type: 'number', required: true }
     ]
   },
   {
@@ -204,7 +212,11 @@ const FORM_STEPS = [
       { name: 'Employment_Type', label: 'Employment Type', type: 'select', options: ['Salaried', 'Self Employed', 'Business', 'Professional'], required: true },
       { name: 'Employer_Name', label: 'Employer / Business Name', type: 'text', required: true },
       { name: 'Experience', label: 'Years of Experience', type: 'number', required: true },
-      { name: 'Monthly_Income', label: 'Monthly Income (₹)', type: 'number', required: true }
+      { name: 'Monthly_Income', label: 'Monthly Income (₹)', type: 'number', required: true },
+      { name: 'Nature_Of_Business', label: 'Nature of Business / Work', type: 'text', required: true },
+      { name: 'Company_Address', label: 'Company / Office Address', type: 'textarea', required: true, full: true },
+      { name: 'Office_Tel_No', label: 'Office Telephone No.', type: 'tel', required: false },
+      { name: 'Office_Owned_Rented', label: 'Office Owned / Rented', type: 'select', options: ['Owned', 'Rented'], required: true }
     ]
   },
   {
@@ -216,6 +228,23 @@ const FORM_STEPS = [
       { name: 'IFSC', label: 'IFSC Code', type: 'text', required: true },
       { name: 'ITR_Filed', label: 'Income Tax Return Filed?', type: 'select', options: ['Yes', 'No'], required: true },
       { name: 'GST_Number', label: 'GST Number (if applicable)', type: 'text', required: false }
+    ]
+  },
+  {
+    title: 'Additional Details', sub: 'For self-employed / business applicants only — leave blank if you are salaried.',
+    fields: [
+      { name: 'CoApplicant_Name', label: 'Co-Applicant Name', type: 'text', required: false },
+      { name: 'CoApplicant_DOB', label: 'Co-Applicant Date of Birth', type: 'date', required: false },
+      { name: 'CoApplicant_Mother_Name', label: "Co-Applicant's Mother Name", type: 'text', required: false },
+      { name: 'CoApplicant_Spouse_Name', label: "Co-Applicant's Spouse Name", type: 'text', required: false },
+      { name: 'TradeRef1_Company', label: 'Trade Reference 1 — Company Name', type: 'text', required: false },
+      { name: 'TradeRef1_CustomerName', label: 'Trade Reference 1 — Customer Name', type: 'text', required: false },
+      { name: 'TradeRef1_Mobile', label: 'Trade Reference 1 — Mobile Number', type: 'tel', required: false },
+      { name: 'TradeRef1_Address', label: 'Trade Reference 1 — Address', type: 'textarea', required: false, full: true },
+      { name: 'TradeRef2_Company', label: 'Trade Reference 2 — Company Name', type: 'text', required: false },
+      { name: 'TradeRef2_CustomerName', label: 'Trade Reference 2 — Customer Name', type: 'text', required: false },
+      { name: 'TradeRef2_Mobile', label: 'Trade Reference 2 — Mobile Number', type: 'tel', required: false },
+      { name: 'TradeRef2_Address', label: 'Trade Reference 2 — Address', type: 'textarea', required: false, full: true }
     ]
   },
   {
@@ -559,14 +588,9 @@ function handleDocumentUpload(file, documentType, statusId) {
 function renderReviewStep() {
   updateProgress(REVIEW_STEP_INDEX, 'Review & Submit');
 
-  const sections = [
-    { title: 'Personal Details', fields: FORM_STEPS[0].fields },
-    { title: 'Address', fields: FORM_STEPS[1].fields },
-    { title: 'Employment', fields: FORM_STEPS[2].fields },
-    { title: 'Financial Information', fields: FORM_STEPS[3].fields },
-    { title: 'References', fields: FORM_STEPS[4].fields },
-    { title: 'Loan Requirement', fields: FORM_STEPS[5].fields }
-  ];
+  const sections = FORM_STEPS.map(function (step) {
+    return { title: step.title, fields: step.fields };
+  });
 
   const sectionsHtml = sections.map(function (section) {
     const rowsHtml = section.fields.map(function (field) {
