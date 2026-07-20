@@ -149,6 +149,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       </div>
       <button class="btn btn-secondary" id="exportBtn">Export to CSV</button>
       <button class="btn btn-secondary" id="dangerZoneToggle" style="border-color:var(--error-red);color:var(--error-red);">Delete Customer Data</button>
+      <button class="btn btn-secondary" id="pincodeToggle">Check Pincode</button>
+    </div>
+
+    <div id="pincodePanel" style="display:none;background:var(--white);border:1.5px solid var(--border-light);border-radius:var(--radius-md);padding:18px 20px;margin-bottom:20px;">
+      <h4 style="color:var(--royal-blue);font-family:var(--font-display);font-size:0.92rem;margin-bottom:12px;">Check Lender Serviceability by Pincode</h4>
+      <div class="action-row">
+        <div class="form-group"><input type="text" id="pincodeInput" placeholder="Pincode (e.g. 400001)" maxlength="6"></div>
+        <div class="form-group"><input type="text" id="pincodeLoanTypeInput" placeholder="Loan type (optional — leave blank for all)"></div>
+        <button class="btn btn-primary btn-small" id="pincodeCheckBtn">Check</button>
+      </div>
+      <div id="pincodeResults" style="margin-top:12px;"></div>
     </div>
 
     <div id="dangerZonePanel" style="display:none;background:#FFF5F5;border:1.5px solid var(--error-red);border-radius:var(--radius-md);padding:18px 20px;margin-bottom:20px;">
@@ -601,6 +612,48 @@ document.getElementById('exportBtn').addEventListener('click', function () {
 document.getElementById('dangerZoneToggle').addEventListener('click', function () {
   const panel = document.getElementById('dangerZonePanel');
   panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('pincodeToggle').addEventListener('click', function () {
+  const panel = document.getElementById('pincodePanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('pincodeCheckBtn').addEventListener('click', function () {
+  const pincode = document.getElementById('pincodeInput').value.trim();
+  const loanType = document.getElementById('pincodeLoanTypeInput').value.trim();
+  const resultsDiv = document.getElementById('pincodeResults');
+
+  if (!/^\d{6}$/.test(pincode)) {
+    resultsDiv.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">Enter a valid 6-digit pincode.</span>';
+    return;
+  }
+
+  resultsDiv.innerHTML = '<span style="font-size:0.85rem;color:var(--grey-mid);">Checking...</span>';
+
+  callApi({ action: 'adminCheckPincode', pincode: pincode, loanType: loanType }).then(function (response) {
+    if (!response.success) {
+      resultsDiv.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">' + (response.error || 'Check failed.') + '</span>';
+      return;
+    }
+
+    const results = response.data.results || [];
+    if (results.length === 0) {
+      resultsDiv.innerHTML = '<span style="font-size:0.85rem;color:var(--grey-mid);">No lenders found servicing pincode ' + pincode + (loanType ? ' for ' + loanType : '') + '.</span>';
+      return;
+    }
+
+    resultsDiv.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;">' +
+      results.map(function (r) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border-light);border-radius:8px;padding:10px 14px;">' +
+          '<strong style="font-size:0.9rem;color:var(--navy);">' + r.lenderName + '</strong>' +
+          '<span style="font-size:0.8rem;color:var(--grey-mid);">' + r.loanType + '</span>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }).catch(function () {
+    resultsDiv.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">Connection issue.</span>';
+  });
 });
 
 document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
