@@ -150,6 +150,21 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
       <button class="btn btn-secondary" id="exportBtn">Export to CSV</button>
       <button class="btn btn-secondary" id="dangerZoneToggle" style="border-color:var(--error-red);color:var(--error-red);">Delete Customer Data</button>
       <button class="btn btn-secondary" id="pincodeToggle">Check Pincode</button>
+      <button class="btn btn-primary" id="newAppToggle">+ New Application</button>
+    </div>
+
+    <div id="newAppPanel" style="display:none;background:var(--white);border:1.5px solid var(--border-light);border-radius:var(--radius-md);padding:18px 20px;margin-bottom:20px;">
+      <h4 style="color:var(--royal-blue);font-family:var(--font-display);font-size:0.92rem;margin-bottom:6px;">Create Application for a Customer</h4>
+      <p style="font-size:0.85rem;color:var(--grey-mid);margin-bottom:14px;">For customers who shared details with you directly (call, WhatsApp, in person). They can then check their status anytime at track.html using this mobile number and PAN — no need to call you.</p>
+      <div class="detail-grid" style="margin-bottom:14px;">
+        <div class="form-group"><input type="tel" id="newAppMobile" placeholder="Mobile Number" maxlength="10"></div>
+        <div class="form-group"><input type="text" id="newAppPan" placeholder="PAN Number" maxlength="10" style="text-transform:uppercase;"></div>
+        <div class="form-group"><input type="text" id="newAppName" placeholder="Full Name"></div>
+        <div class="form-group"><input type="text" id="newAppLoanType" placeholder="Loan Type (e.g. Personal Loan)"></div>
+        <div class="form-group"><input type="number" id="newAppLoanAmount" placeholder="Loan Amount (optional)"></div>
+      </div>
+      <button class="btn btn-primary btn-small" id="createAppBtn">Create Application</button>
+      <div id="newAppResult" style="margin-top:14px;"></div>
     </div>
 
     <div id="pincodePanel" style="display:none;background:var(--white);border:1.5px solid var(--border-light);border-radius:var(--radius-md);padding:18px 20px;margin-bottom:20px;">
@@ -617,6 +632,57 @@ document.getElementById('dangerZoneToggle').addEventListener('click', function (
 document.getElementById('pincodeToggle').addEventListener('click', function () {
   const panel = document.getElementById('pincodePanel');
   panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('newAppToggle').addEventListener('click', function () {
+  const panel = document.getElementById('newAppPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('createAppBtn').addEventListener('click', function () {
+  const mobile = document.getElementById('newAppMobile').value.trim();
+  const pan = document.getElementById('newAppPan').value.trim().toUpperCase();
+  const fullName = document.getElementById('newAppName').value.trim();
+  const loanType = document.getElementById('newAppLoanType').value.trim();
+  const loanAmount = document.getElementById('newAppLoanAmount').value.trim();
+  const resultDiv = document.getElementById('newAppResult');
+
+  if (!/^[6-9]\d{9}$/.test(mobile) || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {
+    resultDiv.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">Enter a valid mobile number and PAN.</span>';
+    return;
+  }
+
+  const btn = document.getElementById('createAppBtn');
+  btn.disabled = true;
+  btn.textContent = 'Creating...';
+
+  callApi({ action: 'adminCreateApplication', mobile: mobile, pan: pan, fullName: fullName, loanType: loanType, loanAmount: loanAmount })
+    .then(function (response) {
+      btn.disabled = false;
+      btn.textContent = 'Create Application';
+
+      if (!response.success) {
+        resultDiv.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">' + (response.error || 'Could not create application.') + '</span>';
+        return;
+      }
+
+      resultDiv.innerHTML =
+        '<div style="background:rgba(30,158,90,0.08);border-radius:8px;padding:12px 14px;">' +
+          '<strong style="color:var(--success-green);font-size:0.88rem;">✓ Created — ' + response.data.applicationId + '</strong>' +
+          '<div style="font-size:0.85rem;color:var(--grey-dark);margin-top:6px;">Tell the customer to check their status anytime at <strong>loan.vastmywealth.com/track.html</strong> using mobile ' + response.data.mobile + ' and their PAN.</div>' +
+        '</div>';
+
+      document.getElementById('newAppMobile').value = '';
+      document.getElementById('newAppPan').value = '';
+      document.getElementById('newAppName').value = '';
+      document.getElementById('newAppLoanType').value = '';
+      document.getElementById('newAppLoanAmount').value = '';
+      loadApplications(document.getElementById('searchInput').value.trim());
+    }).catch(function () {
+      btn.disabled = false;
+      btn.textContent = 'Create Application';
+      resultDiv.innerHTML = '<span style="font-size:0.85rem;color:var(--error-red);">Connection issue.</span>';
+    });
 });
 
 document.getElementById('pincodeCheckBtn').addEventListener('click', function () {
