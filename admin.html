@@ -441,7 +441,11 @@ function buildDetailHtml(app, index) {
 
     '<div class="action-panel">' +
       '<h4>Documents</h4>' +
-      '<div id="docsPanel_' + index + '"><button class="btn btn-secondary btn-small" onclick="loadDocuments(' + index + ')">Load Documents</button></div>' +
+      '<div id="docsPanel_' + index + '">' +
+        '<button class="btn btn-secondary btn-small" onclick="loadDocuments(' + index + ')">Load Documents</button> ' +
+        '<button class="btn btn-secondary btn-small" onclick="generateDetailSheet(' + index + ')">Generate Detail Sheet Excel</button>' +
+        '<div id="detailSheetResult_' + index + '" style="margin-top:8px;"></div>' +
+      '</div>' +
     '</div>' +
 
     '<div class="action-panel">' +
@@ -533,6 +537,23 @@ function saveLenderStatus(index, lenderName, i) {
     } else {
       showToast(response.error || 'Update failed.', true);
     }
+  });
+}
+
+function generateDetailSheet(index) {
+  const app = ALL_APPLICATIONS[index];
+  const resultDiv = document.getElementById('detailSheetResult_' + index);
+  resultDiv.innerHTML = '<span style="font-size:0.82rem;color:var(--grey-mid);">Generating...</span>';
+
+  callApi({ action: 'adminGenerateDetailSheet', applicationId: app.Application_ID }).then(function (response) {
+    if (!response.success) {
+      resultDiv.innerHTML = '<span style="font-size:0.82rem;color:var(--error-red);">' + (response.error || 'Could not generate.') + '</span>';
+      return;
+    }
+    resultDiv.innerHTML = '<a href="' + response.data.folderUrl + '" target="_blank" rel="noopener" style="font-size:0.82rem;color:var(--success-green);font-weight:600;">✓ Generated — Open Folder ↗</a>';
+    showToast('Detail Sheet Excel generated.');
+  }).catch(function () {
+    resultDiv.innerHTML = '<span style="font-size:0.82rem;color:var(--error-red);">Connection issue.</span>';
   });
 }
 
