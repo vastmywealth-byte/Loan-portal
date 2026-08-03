@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VastMyWealth Digital — Apply for a Loan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16233F; --ink-soft:#4A5568; --paper:#EFF2EF; --paper-raised:#FFFFFF;
+  --brass:#B8863B; --brass-deep:#8F6526; --forest:#2F5D50; --rust:#A6432F;
+  --line:#D8DCD3; --line-soft:#E6E9E3;
+  --font-display:'Zilla Slab',serif; --font-body:'IBM Plex Sans',sans-serif;
+  --radius:10px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{ font-family:var(--font-body); background:var(--paper); color:var(--ink); line-height:1.5; }
+
+.hero{ background:linear-gradient(180deg, var(--ink) 0%, #1F335C 100%); padding:32px 20px 40px; text-align:center; color:#fff; }
+.logo-img{ width:88px; height:88px; border-radius:50%; margin:0 auto 12px; display:block; }
+.brand-text{ font-family:var(--font-display); font-weight:700; font-size:20px; }
+.brand-text span{ color:var(--brass); }
+.hero h1{ font-family:var(--font-display); font-size:26px; font-weight:700; margin:18px 0 6px; }
+.hero p.sub{ font-size:13.5px; color:rgba(255,255,255,.75); max-width:380px; margin:0 auto; }
+
+.checklist{ max-width:420px; margin:22px auto 0; text-align:left; }
+.checklist-item{ display:flex; gap:10px; align-items:flex-start; padding:8px 0; font-size:14px; }
+.checklist-item .tick{ color:var(--brass); flex-shrink:0; font-weight:700; }
+
+.urgency-row{ display:flex; gap:10px; max-width:420px; margin:18px auto 0; flex-wrap:wrap; justify-content:center; }
+.urgency-chip{ background:rgba(184,134,59,.18); border:1px solid rgba(184,134,59,.4); border-radius:20px; padding:7px 14px; font-size:12px; font-weight:600; color:#F2DFB8; }
+
+.cta-row{ display:flex; gap:10px; max-width:420px; margin:24px auto 0; }
+.cta-btn{ flex:1; padding:14px; border-radius:8px; font-size:14px; font-weight:700; text-decoration:none; text-align:center; cursor:pointer; border:none; }
+.cta-primary{ background:var(--brass); color:#fff; }
+.cta-secondary{ background:rgba(255,255,255,.12); color:#fff; border:1.5px solid rgba(255,255,255,.3); }
+
+main{ max-width:420px; margin:0 auto; padding:24px 20px 60px; }
+
+.tabs{ display:flex; gap:8px; margin-bottom:18px; }
+.tab-btn{ flex:1; padding:11px; border:1.5px solid var(--line); border-radius:8px; background:var(--paper-raised); font-size:13.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; }
+.tab-btn.active{ border-color:var(--ink); background:var(--ink); color:#fff; }
+
+.auth-panel{ display:none; background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius); padding:22px 20px; }
+.auth-panel.show{ display:block; }
+
+.field{ margin-bottom:14px; }
+.field label{ display:block; font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em; margin-bottom:6px; }
+.field input{ width:100%; padding:11px 12px; border:1.5px solid var(--line); border-radius:8px; font-size:14px; }
+.field input:focus{ outline:none; border-color:var(--brass); }
+
+.consent-row{ display:flex; gap:10px; align-items:flex-start; margin:16px 0; }
+.consent-row input{ margin-top:3px; flex-shrink:0; }
+.consent-row label{ font-size:12px; color:var(--ink-soft); line-height:1.5; text-transform:none; }
+
+.btn-auth{ width:100%; padding:14px; background:var(--ink); color:#fff; border:none; border-radius:8px; font-size:14.5px; font-weight:600; cursor:pointer; }
+.btn-auth:hover{ background:#0E1830; }
+.btn-auth:disabled{ background:var(--line); color:var(--ink-soft); cursor:not-allowed; }
+
+.step-hint{ font-size:12px; color:var(--ink-soft); text-align:center; margin-top:14px; }
+.error-msg{ font-size:12.5px; color:var(--rust); margin-top:8px; display:none; }
+.error-msg.show{ display:block; }
+.hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <img src="logo.jpg" alt="VastMyWealth" class="logo-img">
+  <div class="brand-text">Vast<span>My</span>Wealth Digital</div>
+
+  <h1>Apply Smarter. Get Matched Faster.</h1>
+  <p class="sub">Direct bank & NBFC applications, no middlemen, no hidden charges.</p>
+
+  <div class="checklist">
+    <div class="checklist-item"><span class="tick">✅</span> Direct Bank & NBFC Applications</div>
+    <div class="checklist-item"><span class="tick">✅</span> No Middlemen. No Hidden Charges.</div>
+    <div class="checklist-item"><span class="tick">✅</span> Secure & Confidential Process</div>
+    <div class="checklist-item"><span class="tick">✅</span> Personalized Lender Recommendations</div>
+    <div class="checklist-item"><span class="tick">✅</span> Quick & Simple Online Application</div>
+  </div>
+
+  <div class="urgency-row">
+    <div class="urgency-chip">⚡ Personal/Business Loan — Funds in 48 Hours*</div>
+    <div class="urgency-chip">🏠 Home Loan/LAP — Sanction in 4 Working Days*</div>
+  </div>
+
+  <div class="cta-row">
+    <button class="cta-btn cta-primary" onclick="showAuth('signup')">Apply Now</button>
+    <button class="cta-btn cta-secondary" onclick="showAuth('login')">Track My Application</button>
+  </div>
+</div>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" id="tabSignup" onclick="switchTab('signup')">New Application</button>
+    <button class="tab-btn" id="tabLogin" onclick="switchTab('login')">Login</button>
+  </div>
+
+  <!-- ===== SIGNUP — STEP 1: MOBILE ===== -->
+  <div class="auth-panel show" id="panelSignupMobile">
+    <div class="field">
+      <label>Mobile Number<span style="color:var(--rust)">*</span></label>
+      <input type="text" id="su_mobile" maxlength="10" inputmode="numeric" placeholder="10-digit mobile number">
+    </div>
+    <button class="btn-auth" onclick="goToPinSetup()">Continue</button>
+    <div class="step-hint">You'll use this number to log in and track your application.</div>
+  </div>
+
+  <!-- ===== SIGNUP — STEP 2: PIN + CONSENT ===== -->
+  <div class="auth-panel" id="panelSignupPin">
+    <div class="field">
+      <label>Create a 4-Digit PIN<span style="color:var(--rust)">*</span></label>
+      <input type="password" id="su_pin" maxlength="4" inputmode="numeric" placeholder="••••">
+    </div>
+    <div class="field">
+      <label>Confirm PIN<span style="color:var(--rust)">*</span></label>
+      <input type="password" id="su_pinConfirm" maxlength="4" inputmode="numeric" placeholder="••••">
+    </div>
+    <div class="step-hint" style="text-align:left;margin-top:0;">You'll use your mobile number and this PIN every time you log in.</div>
+
+    <div class="consent-row">
+      <input type="checkbox" id="su_consent">
+      <label for="su_consent">I consent to Vast Wealth Advisors Pvt Ltd verifying my details internally and sharing my documents with lenders at its discretion, for the purpose of processing my loan application.</label>
+    </div>
+
+    <div class="error-msg" id="signupError"></div>
+    <button class="btn-auth" id="signupSubmitBtn" onclick="submitSignup()">Create Account & Continue</button>
+  </div>
+
+  <!-- ===== LOGIN ===== -->
+  <div class="auth-panel" id="panelLogin">
+    <div class="field">
+      <label>Mobile Number<span style="color:var(--rust)">*</span></label>
+      <input type="text" id="li_mobile" maxlength="10" inputmode="numeric" placeholder="10-digit mobile number">
+    </div>
+    <div class="field">
+      <label>4-Digit PIN<span style="color:var(--rust)">*</span></label>
+      <input type="password" id="li_pin" maxlength="4" inputmode="numeric" placeholder="••••">
+    </div>
+    <div class="error-msg" id="loginError"></div>
+    <button class="btn-auth" onclick="submitLogin()">Login</button>
+  </div>
+</main>
+
+<script>
+var BACKEND_URL = "REPLACE_WITH_YOUR_PORTAL_BACKEND_URL";
+/* Where a signed-up customer lands to actually apply */
+var APPLICATION_PAGE = "portal-unified-application.html";
+
+function showAuth(which){
+  switchTab(which);
+  document.querySelector('main').scrollIntoView({behavior:'smooth'});
+}
+
+function switchTab(which){
+  document.getElementById('tabSignup').classList.toggle('active', which === 'signup');
+  document.getElementById('tabLogin').classList.toggle('active', which === 'login');
+  document.getElementById('panelSignupMobile').classList.toggle('show', which === 'signup');
+  document.getElementById('panelSignupPin').classList.remove('show');
+  document.getElementById('panelLogin').classList.toggle('show', which === 'login');
+}
+
+function goToPinSetup(){
+  var mobile = document.getElementById('su_mobile').value.replace(/\D/g,'');
+  if (mobile.length !== 10) { alert('Please enter a valid 10-digit mobile number.'); return; }
+  document.getElementById('panelSignupMobile').classList.remove('show');
+  document.getElementById('panelSignupPin').classList.add('show');
+}
+
+function submitSignup(){
+  var mobile = document.getElementById('su_mobile').value.replace(/\D/g,'');
+  var pin = document.getElementById('su_pin').value;
+  var pinConfirm = document.getElementById('su_pinConfirm').value;
+  var consent = document.getElementById('su_consent').checked;
+  var errEl = document.getElementById('signupError');
+  errEl.classList.remove('show');
+
+  if (!/^\d{4}$/.test(pin)) { errEl.textContent = 'PIN must be exactly 4 digits.'; errEl.classList.add('show'); return; }
+  if (pin !== pinConfirm) { errEl.textContent = 'PINs do not match.'; errEl.classList.add('show'); return; }
+  if (!consent) { errEl.textContent = 'Please accept the consent to continue.'; errEl.classList.add('show'); return; }
+
+  var btn = document.getElementById('signupSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Creating account…';
+
+  fetch(BACKEND_URL, {
+    method:'POST',
+    body: JSON.stringify({ action:'createAccount', mobile:mobile, pin:pin, consentGiven:true })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success) {
+        sessionStorage.setItem('vmw_mobile', mobile);
+        window.location.href = APPLICATION_PAGE;
+      } else {
+        btn.disabled = false; btn.textContent = 'Create Account & Continue';
+        errEl.textContent = d.error || 'Something went wrong — please try again.';
+        errEl.classList.add('show');
+      }
+    })
+    .catch(function(){
+      btn.disabled = false; btn.textContent = 'Create Account & Continue';
+      errEl.textContent = 'Connection error — please try again.';
+      errEl.classList.add('show');
+    });
+}
+
+function submitLogin(){
+  var mobile = document.getElementById('li_mobile').value.replace(/\D/g,'');
+  var pin = document.getElementById('li_pin').value;
+  var errEl = document.getElementById('loginError');
+  errEl.classList.remove('show');
+
+  if (mobile.length !== 10 || !/^\d{4}$/.test(pin)) {
+    errEl.textContent = 'Please enter a valid mobile number and 4-digit PIN.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  fetch(BACKEND_URL + '?action=loginAccount&mobile=' + encodeURIComponent(mobile) + '&pin=' + encodeURIComponent(pin))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success) {
+        sessionStorage.setItem('vmw_mobile', mobile);
+        window.location.href = APPLICATION_PAGE;
+      } else {
+        errEl.textContent = d.error || 'Invalid mobile number or PIN.';
+        errEl.classList.add('show');
+      }
+    })
+    .catch(function(){
+      errEl.textContent = 'Connection error — please try again.';
+      errEl.classList.add('show');
+    });
+}
+</script>
+</body>
+</html>
