@@ -575,7 +575,6 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     mobile: document.getElementById('f_mobile').value,
     email: document.getElementById('f_email').value,
     employmentType: state.employmentType,
-    stmtPassword: document.getElementById('f_stmtPassword') ? document.getElementById('f_stmtPassword').value : '',
     companyType: state.companyType || '',
     house: document.getElementById('f_house').value,
     monthlyIncome: document.getElementById('f_income').value.replace(/[^0-9.]/g,''),
@@ -590,9 +589,9 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     bankAccountType: state.employmentType === 'Self-Employed' ? document.getElementById('f_bankAccountType').value : '',
     propertyAddress: document.getElementById('f_propertyAddress') ? document.getElementById('f_propertyAddress').value : '',
     propertyPincode: document.getElementById('f_propertyPincode') ? document.getElementById('f_propertyPincode').value : '',
-    marketValue: document.getElementById('f_marketValue') ? document.getElementById('f_marketValue').value : ''
+    marketValue: document.getElementById('f_marketValue') ? document.getElementById('f_marketValue').value : '',
+    stmtPassword: document.getElementById('f_stmtPassword') ? document.getElementById('f_stmtPassword').value : ''
   };
-
   var files = await buildFilesPayload();
 
   document.getElementById('loadingState').textContent = 'Submitting your application and matching lenders… this can take up to a minute, please don\'t close this tab.';
