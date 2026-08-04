@@ -575,6 +575,7 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     mobile: document.getElementById('f_mobile').value,
     email: document.getElementById('f_email').value,
     employmentType: state.employmentType,
+    stmtPassword: document.getElementById('f_stmtPassword') ? document.getElementById('f_stmtPassword').value : '',
     companyType: state.companyType || '',
     house: document.getElementById('f_house').value,
     monthlyIncome: document.getElementById('f_income').value.replace(/[^0-9.]/g,''),
