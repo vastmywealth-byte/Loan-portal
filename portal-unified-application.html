@@ -239,7 +239,7 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
 </main>
 
 <script>
-var BACKEND_URL = "https://script.google.com/macros/s/AKfycbwGTSTzKTJYrhx2wP3UuBPG_64g-ZczNPhem3-PfcPPu8AYQaT0MvSgz1FsyRdoonVndg/exec";
+var BACKEND_URL = "REPLACE_WITH_YOUR_PORTAL_BACKEND_URL";
 
 var state = { loanType:"PL", employmentType:null, companyType:null, house:null, uploadedFiles:{} };
 
@@ -527,7 +527,7 @@ function renderResults(data, profile){
         '&lenderName=' + encodeURIComponent(lender.name) + '&loanType=' + encodeURIComponent(state.loanType) +
         '&hasUtm=' + (lender.hasUtm ? 'Yes' : 'No')).catch(function(){});
 
-      btn.textContent = lender.hasUtm ? '✓ Applied' : '✓ Submitted — We\\'ll forward this';
+      btn.textContent = lender.hasUtm ? '✓ Applied' : '✓ Submitted — we will forward this';
       btn.classList.add('applied-state');
       btn.disabled = true;
       card.classList.add('applied');
