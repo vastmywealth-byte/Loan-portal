@@ -426,8 +426,37 @@ function wireUploadBoxes(){
     });
   });
 }
+function checkReturningUser(){
+  var flow = sessionStorage.getItem('vmw_flow');
+  var mobile = sessionStorage.getItem('vmw_mobile');
 
-renderDocuments(); // initial render (Salaried default view, though employment not yet chosen)
+  if (flow === 'login' && mobile) {
+    document.getElementById('formWrap').classList.add('hidden');
+    document.getElementById('loadingState').style.display = 'block';
+    document.getElementById('loadingState').textContent = 'Fetching your application status…';
+
+    fetch(BACKEND_URL + '?action=getApplicationStatus&mobile=' + encodeURIComponent(mobile))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        document.getElementById('loadingState').style.display = 'none';
+        if (data.success && data.found) {
+          state.loanType = data.product;
+          renderResults(data, { mobile: mobile });
+        } else {
+          document.getElementById('formWrap').classList.remove('hidden');
+          renderDocuments();
+        }
+      })
+      .catch(function(){
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('formWrap').classList.remove('hidden');
+        renderDocuments();
+      });
+  } else {
+    renderDocuments();
+  }
+}
+checkReturningUser();
 
 /* ===== SUBMIT ===== */
 function fileToBase64(file){
