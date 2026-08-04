@@ -498,10 +498,16 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     .then(function(r){ return r.json(); })
     .then(function(data){
       document.getElementById('loadingState').style.display = 'none';
+      if (!data.success) {
+        document.getElementById('loadingState').style.display = 'block';
+        document.getElementById('loadingState').textContent = 'Error: ' + (data.error || 'Unknown error') + ' — please try again.';
+        return;
+      }
       renderResults(data, profile);
     })
-    .catch(function(){
-      document.getElementById('loadingState').textContent = 'Something went wrong — please try again in a moment.';
+    .catch(function(err){
+      document.getElementById('loadingState').style.display = 'block';
+      document.getElementById('loadingState').textContent = 'Connection error: ' + err.message;
     });
 });
 
