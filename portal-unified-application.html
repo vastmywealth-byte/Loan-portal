@@ -97,6 +97,9 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
 .lender-apply:hover{ filter:brightness(1.05); }
 .lender-apply.applied-state{ background:var(--forest); color:#fff; cursor:default; }
 .results-footer{ text-align:center; padding:20px 0 0; font-size:12px; color:var(--text-onnavy-muted); }
+.btn-new-application{ width:100%; padding:15px; margin-top:18px; background:transparent; color:var(--gold-light); border:1.5px solid var(--panel-border); border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+.btn-new-application:hover{ border-color:var(--gold); }
+.lender-apply:disabled{ cursor:default; opacity:.9; }
 .loading{ text-align:center; padding:60px 20px; color:var(--text-onnavy-muted); font-size:14px; }
 
 /* ===== TRACKING DIAGNOSTIC BANNER ===== */
@@ -251,6 +254,7 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
     <div class="retry-note">💡 If a lender declines your application — for example, if your pincode isn't serviced by them — simply come back to this page and apply with your next match.</div>
     <div id="lenderCards"></div>
     <div class="results-footer">Applications with a direct link open in a new tab. For others, we'll forward your application on your behalf.</div>
+    <button class="btn-new-application" onclick="startNewApplication()">Start a New Application</button>
   </div>
 
 </main>
@@ -617,33 +621,48 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     });
 });
 
+function startNewApplication(){
+  sessionStorage.setItem('vmw_flow', 'signup');
+  document.getElementById('resultsWrap').classList.add('hidden');
+  document.getElementById('trackErrorWrap').classList.add('hidden');
+  document.getElementById('formWrap').classList.remove('hidden');
+  state.uploadedFiles = {};
+  renderDocuments();
+}
+
 function renderResults(data, profile){
   var container = document.getElementById('lenderCards');
   container.innerHTML = '';
 
   data.lenders.forEach(function(lender, idx){
+    var alreadyApplied = !!lender.alreadyApplied;
     var card = document.createElement('div');
-    card.className = 'lender-card';
+    card.className = 'lender-card' + (alreadyApplied ? ' applied' : '');
+    var btnLabel = alreadyApplied
+      ? (lender.hasUtm ? '✓ Applied' : '✓ Submitted — we will forward this')
+      : 'Apply Now →';
     card.innerHTML =
       '<div class="lender-rank">'+(idx+1)+'</div>' +
       '<div class="lender-info"><div class="lender-name">'+escapeHtml(lender.name)+'</div>' +
       (lender.rateBand ? '<div class="lender-rate">'+escapeHtml(lender.rateBand)+'</div>' : '') + '</div>' +
-      '<button class="lender-apply">Apply Now →</button>';
+      '<button class="lender-apply'+(alreadyApplied ? ' applied-state' : '')+'"'+(alreadyApplied ? ' disabled' : '')+'>'+btnLabel+'</button>';
 
     var btn = card.querySelector('.lender-apply');
-    btn.addEventListener('click', function(){
-      if (lender.hasUtm) {
-        window.open(lender.applyUrl, '_blank');
-      }
-      fetch(BACKEND_URL + '?action=logLenderApplication&mobile=' + encodeURIComponent(profile.mobile) +
-        '&lenderName=' + encodeURIComponent(lender.name) + '&loanType=' + encodeURIComponent(state.loanType) +
-        '&hasUtm=' + (lender.hasUtm ? 'Yes' : 'No')).catch(function(){});
+    if (!alreadyApplied) {
+      btn.addEventListener('click', function(){
+        if (lender.hasUtm) {
+          window.open(lender.applyUrl, '_blank');
+        }
+        fetch(BACKEND_URL + '?action=logLenderApplication&mobile=' + encodeURIComponent(profile.mobile) +
+          '&lenderName=' + encodeURIComponent(lender.name) + '&loanType=' + encodeURIComponent(state.loanType) +
+          '&hasUtm=' + (lender.hasUtm ? 'Yes' : 'No')).catch(function(){});
 
-      btn.textContent = lender.hasUtm ? '✓ Applied' : '✓ Submitted — we will forward this';
-      btn.classList.add('applied-state');
-      btn.disabled = true;
-      card.classList.add('applied');
-    });
+        btn.textContent = lender.hasUtm ? '✓ Applied' : '✓ Submitted — we will forward this';
+        btn.classList.add('applied-state');
+        btn.disabled = true;
+        card.classList.add('applied');
+      });
+    }
 
     container.appendChild(card);
   });
