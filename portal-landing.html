@@ -192,6 +192,7 @@ function submitSignup(){
     .then(function(d){
       if (d.success) {
         sessionStorage.setItem('vmw_mobile', mobile);
+sessionStorage.setItem('vmw_mobile', mobile);
 sessionStorage.setItem('vmw_flow', 'signup');
 window.location.href = APPLICATION_PAGE;
       } else {
@@ -224,6 +225,7 @@ function submitLogin(){
     .then(function(d){
       if (d.success) {
         sessionStorage.setItem('vmw_mobile', mobile);
+        sessionStorage.setItem('vmw_flow', 'login');
         window.location.href = APPLICATION_PAGE;
       } else {
         errEl.textContent = d.error || 'Invalid mobile number or PIN.';
