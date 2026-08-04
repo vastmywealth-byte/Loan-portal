@@ -91,6 +91,14 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
 .lender-apply.applied-state{ background:var(--forest); cursor:default; }
 .results-footer{ text-align:center; padding:20px 0 0; font-size:12px; color:var(--ink-soft); }
 .loading{ text-align:center; padding:60px 20px; color:var(--ink-soft); font-size:14px; }
+
+/* ===== TRACKING DIAGNOSTIC BANNER ===== */
+.track-error{ background:rgba(166,67,47,.08); border:1px solid rgba(166,67,47,.35); border-radius:10px; padding:16px 18px; margin:20px auto; max-width:680px; font-size:13px; color:var(--rust); line-height:1.6; }
+.track-error strong{ display:block; margin-bottom:4px; font-size:13.5px; }
+.track-error code{ display:block; background:rgba(0,0,0,.05); padding:8px 10px; border-radius:6px; margin-top:8px; font-family:var(--font-mono); font-size:11.5px; color:var(--ink); white-space:pre-wrap; word-break:break-word; }
+.track-error button{ margin-top:12px; padding:9px 16px; border:1px solid var(--rust); background:transparent; color:var(--rust); border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; }
+.track-not-found{ background:rgba(184,134,59,.08); border:1px solid rgba(184,134,59,.3); border-radius:10px; padding:16px 18px; margin:20px auto; max-width:680px; font-size:13px; color:var(--brass-deep); line-height:1.6; text-align:center; }
+.track-not-found button{ margin-top:12px; padding:9px 16px; border:1px solid var(--brass-deep); background:transparent; color:var(--brass-deep); border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -103,6 +111,8 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
 </header>
 
 <main>
+
+  <div class="hidden" id="trackErrorWrap"></div>
 
   <div id="formWrap">
     <div class="loan-toggle" id="loanToggle">
@@ -426,9 +436,39 @@ function wireUploadBoxes(){
     });
   });
 }
+
+/* ===== RETURNING-USER TRACKING (with visible diagnostics) ===== */
+function showTrackError(title, detail){
+  document.getElementById('loadingState').style.display = 'none';
+  var wrap = document.getElementById('trackErrorWrap');
+  wrap.classList.remove('hidden');
+  wrap.innerHTML =
+    '<div class="track-error"><strong>' + title + '</strong>' +
+    'Tracking could not load your application automatically. Details below — screenshot this if you need help debugging.' +
+    '<code>' + detail.replace(/</g,'&lt;') + '</code>' +
+    '<button onclick="showFormManually()">Go to application form instead</button></div>';
+}
+
+function showNotFound(){
+  document.getElementById('loadingState').style.display = 'none';
+  var wrap = document.getElementById('trackErrorWrap');
+  wrap.classList.remove('hidden');
+  wrap.innerHTML =
+    '<div class="track-not-found">We could not find an existing application for this mobile number.' +
+    '<br><button onclick="showFormManually()">Start a new application</button></div>';
+}
+
+function showFormManually(){
+  document.getElementById('trackErrorWrap').classList.add('hidden');
+  document.getElementById('formWrap').classList.remove('hidden');
+  renderDocuments();
+}
+
 function checkReturningUser(){
   var flow = sessionStorage.getItem('vmw_flow');
   var mobile = sessionStorage.getItem('vmw_mobile');
+
+  console.log('[track] flow=', flow, 'mobile=', mobile);
 
   if (flow === 'login' && mobile) {
     document.getElementById('formWrap').classList.add('hidden');
@@ -436,21 +476,34 @@ function checkReturningUser(){
     document.getElementById('loadingState').textContent = 'Fetching your application status…';
 
     fetch(BACKEND_URL + '?action=getApplicationStatus&mobile=' + encodeURIComponent(mobile))
-      .then(function(r){ return r.json(); })
+      .then(function(r){
+        return r.text().then(function(raw){
+          console.log('[track] raw response:', raw);
+          var parsed;
+          try { parsed = JSON.parse(raw); }
+          catch(parseErr){
+            throw new Error('Backend did not return JSON. Raw response started with: ' + raw.slice(0,150));
+          }
+          return parsed;
+        });
+      })
       .then(function(data){
-        document.getElementById('loadingState').style.display = 'none';
+        console.log('[track] parsed:', data);
+        if (data.success === false) {
+          showTrackError('Backend returned an error.', JSON.stringify(data));
+          return;
+        }
         if (data.success && data.found) {
+          document.getElementById('loadingState').style.display = 'none';
           state.loanType = data.product;
           renderResults(data, { mobile: mobile });
         } else {
-          document.getElementById('formWrap').classList.remove('hidden');
-          renderDocuments();
+          showNotFound();
         }
       })
-      .catch(function(){
-        document.getElementById('loadingState').style.display = 'none';
-        document.getElementById('formWrap').classList.remove('hidden');
-        renderDocuments();
+      .catch(function(err){
+        console.error('[track] error:', err);
+        showTrackError('Request failed.', err.message);
       });
   } else {
     renderDocuments();
