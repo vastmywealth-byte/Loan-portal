@@ -192,7 +192,8 @@ function submitSignup(){
     .then(function(d){
       if (d.success) {
         sessionStorage.setItem('vmw_mobile', mobile);
-        window.location.href = APPLICATION_PAGE;
+sessionStorage.setItem('vmw_flow', 'signup');
+window.location.href = APPLICATION_PAGE;
       } else {
         btn.disabled = false; btn.textContent = 'Create Account & Continue';
         errEl.textContent = d.error || 'Something went wrong — please try again.';
