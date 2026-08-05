@@ -140,7 +140,23 @@ pre.output{
       <div class="msg" id="msgBox"></div>
     </form>
 
+    <div class="footlink"><a href="#" id="forgotPinLink">Forgot PIN?</a></div>
     <div class="footlink">New partner? <a href="partner-register.html">Register here</a></div>
+  </div>
+
+  <div class="card" id="forgotPinCard" style="display:none; margin-top:16px;">
+    <h2 style="font-size:18px;">Reset your PIN</h2>
+    <p class="sub">Enter your registered mobile number — we'll email your PIN to the address on file.</p>
+
+    <form id="forgotPinForm">
+      <label for="fp_mobile">Mobile number</label>
+      <input type="tel" id="fp_mobile" required placeholder="10-digit mobile number" maxlength="10" inputmode="numeric">
+
+      <button type="submit" class="btn" id="forgotPinBtn">Email My PIN</button>
+      <div class="msg" id="forgotPinMsg"></div>
+    </form>
+
+    <div class="footlink"><a href="#" id="backToLoginLink">Back to Login</a></div>
   </div>
 </div>
 
@@ -184,6 +200,51 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     btn.disabled = false;
     btn.textContent = 'Log In';
   }
+});
+
+function showForgotMsg(text, type) {
+  const box = document.getElementById('forgotPinMsg');
+  box.textContent = text;
+  box.className = 'msg show ' + type;
+}
+
+document.getElementById('forgotPinLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.querySelector('.card').style.display = 'none';
+  document.getElementById('forgotPinCard').style.display = 'block';
+});
+
+document.getElementById('backToLoginLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('forgotPinCard').style.display = 'none';
+  document.querySelector('.card').style.display = 'block';
+});
+
+document.getElementById('forgotPinForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('forgotPinBtn');
+  const mobile = document.getElementById('fp_mobile').value.trim();
+
+  if (!/^\d{10}$/.test(mobile)) { showForgotMsg('Enter a valid 10-digit mobile number.', 'error'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Sending…';
+
+  try {
+    const url = SCRIPT_URL + '?action=forgotPartnerPin&mobile=' + encodeURIComponent(mobile);
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.success) {
+      showForgotMsg('Your PIN has been emailed to your registered email address.', 'success');
+    } else {
+      showForgotMsg(data.error || 'Something went wrong. Please try again.', 'error');
+    }
+  } catch (err) {
+    showForgotMsg('Network error — please check your connection and try again.', 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Email My PIN';
 });
 </script>
 
