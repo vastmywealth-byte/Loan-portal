@@ -243,24 +243,12 @@ document.getElementById('regForm').addEventListener('submit', async (e) => {
         setTimeout(() => { window.location.href = 'partner-login.html'; }, 2000);
         return;
       }
-    } catch (err) {
-    btn.innerHTML = '<span class="spinner"></span>Checking status…';
-    try {
-      const checkUrl = SCRIPT_URL + '?action=loginPartner&mobile=' + encodeURIComponent(mobile) + '&pin=' + encodeURIComponent(pin);
-      const checkRes = await fetch(checkUrl);
-      const checkData = await checkRes.json();
-      if (checkData.success) {
-        showMsg('Registered! Your partner code is ' + checkData.partnerCode + '. Redirecting to login…', 'success');
-        setTimeout(() => { window.location.href = 'partner-login.html'; }, 2000);
-        return;
-      }
     } catch (verifyErr) { /* fall through to the error message below */ }
 
     showMsg('Connection was slow or dropped. If you already received a confirmation email, your account was created — try logging in instead. Otherwise, please try again. (' + err.message + ')', 'error');
     btn.disabled = false;
     btn.textContent = 'Register as Partner';
   }
-
 });
 </script>
 
