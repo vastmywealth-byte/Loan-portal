@@ -299,12 +299,14 @@ function submitSignup(){
   var mobile = document.getElementById('su_mobile').value.replace(/\D/g,'');
   var pin = document.getElementById('su_pin').value;
   var pinConfirm = document.getElementById('su_pinConfirm').value;
+  var email = document.getElementById('su_email').value.trim();
   var consent = document.getElementById('su_consent').checked;
   var errEl = document.getElementById('signupError');
   errEl.classList.remove('show');
 
   if (!/^\d{4}$/.test(pin)) { errEl.textContent = 'PIN must be exactly 4 digits.'; errEl.classList.add('show'); return; }
   if (pin !== pinConfirm) { errEl.textContent = 'PINs do not match.'; errEl.classList.add('show'); return; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Please enter a valid email address.'; errEl.classList.add('show'); return; }
   if (!consent) { errEl.textContent = 'Please accept the consent to continue.'; errEl.classList.add('show'); return; }
 
   var btn = document.getElementById('signupSubmitBtn');
@@ -312,11 +314,12 @@ function submitSignup(){
 
   fetchJsonRetry(BACKEND_URL, {
     method:'POST',
-    body: JSON.stringify({ action:'createAccount', mobile:mobile, pin:pin, consentGiven:true })
+    body: JSON.stringify({ action:'createAccount', mobile:mobile, pin:pin, consentGiven:true, email:email })
   })
     .then(function(d){
       if (d.success) {
         sessionStorage.setItem('vmw_mobile', mobile);
+        sessionStorage.setItem('vmw_email', email);
         sessionStorage.setItem('vmw_flow', 'signup');
         window.location.href = APPLICATION_PAGE;
       } else {
@@ -331,7 +334,6 @@ function submitSignup(){
       errEl.classList.add('show');
     });
 }
-
 function submitLogin(){
   var mobile = document.getElementById('li_mobile').value.replace(/\D/g,'');
   var pin = document.getElementById('li_pin').value;
