@@ -263,6 +263,7 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
 var BACKEND_URL = "https://script.google.com/macros/s/AKfycbwGTSTzKTJYrhx2wP3UuBPG_64g-ZczNPhem3-PfcPPu8AYQaT0MvSgz1FsyRdoonVndg/exec";
 
 var state = { loanType:"PL", employmentType:null, companyType:null, house:null, uploadedFiles:{} };
+var partnerCode = new URLSearchParams(window.location.search).get('ref') || '';
 
 /* Retries once on network/parse failure — used only for lightweight
    GET calls (status check), never for the file-upload submission,
@@ -590,7 +591,9 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     propertyAddress: document.getElementById('f_propertyAddress') ? document.getElementById('f_propertyAddress').value : '',
     propertyPincode: document.getElementById('f_propertyPincode') ? document.getElementById('f_propertyPincode').value : '',
     marketValue: document.getElementById('f_marketValue') ? document.getElementById('f_marketValue').value : '',
-    stmtPassword: document.getElementById('f_stmtPassword') ? document.getElementById('f_stmtPassword').value : ''
+    stmtPassword: document.getElementById('f_stmtPassword') ? document.getElementById('f_stmtPassword').value : '',
+partnerCode: partnerCode
+
   };
   var files = await buildFilesPayload();
 
