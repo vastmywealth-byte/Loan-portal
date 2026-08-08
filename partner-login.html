@@ -117,6 +117,7 @@ pre.output{
 }
 .spinner{ display:inline-block; width:14px; height:14px; border:2px solid rgba(0,0,0,0.2); border-top-color:var(--navy-950); border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; margin-right:8px; }
 @keyframes spin{ to{ transform:rotate(360deg); } }
+.pin-mask{ -webkit-text-security: disc; text-security: disc; }
 
 </style>
 </head>
@@ -134,7 +135,8 @@ pre.output{
       <input type="tel" id="mobile" required placeholder="10-digit mobile number" maxlength="10" inputmode="numeric">
 
       <label for="pin">4-digit PIN</label>
-      <input type="password" id="pin" required maxlength="4" inputmode="numeric" placeholder="4-digit PIN">
+      <input type="tel" class="pin-mask" pattern="[0-9]*" id="pin" required maxlength="4" inputmode="numeric" placeholder="4-digit PIN">
+
 
       <button type="submit" class="btn" id="submitBtn">Log In</button>
       <div class="msg" id="msgBox"></div>
