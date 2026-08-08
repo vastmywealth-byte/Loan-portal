@@ -163,12 +163,13 @@ main{ max-width:460px; margin:34px auto 0; padding:0 20px 60px; }
   <div class="auth-panel" id="panelSignupPin">
     <div class="field">
       <label>Create a 4-Digit PIN<span style="color:var(--rust)">*</span></label>
-      <input type="tel" class="pin-mask" pattern="[0-9]*" id="li_pin" maxlength="4" inputmode="numeric" placeholder="••••">
+      <input type="tel" class="pin-mask" pattern="[0-9]*" autocomplete="off" id="li_pin" maxlength="4" inputmode="numeric" placeholder="••••">
+
 
     </div>
     <div class="field">
       <label>Confirm PIN<span style="color:var(--rust)">*</span></label>
-      <input type="tel" class="pin-mask" pattern="[0-9]*" id="su_pinConfirm" maxlength="4" inputmode="numeric" placeholder="••••">
+      <input type="tel" class="pin-mask" pattern="[0-9]*" autocomplete="off" id="su_pinConfirm" maxlength="4" inputmode="numeric" placeholder="••••">
 
 
     </div>
@@ -193,7 +194,7 @@ main{ max-width:460px; margin:34px auto 0; padding:0 20px 60px; }
     </div>
     <div class="field">
       <label>4-Digit PIN<span style="color:var(--rust)">*</span></label>
-      <input type="tel" class="pin-mask" pattern="[0-9]*" id="su_pin" maxlength="4" inputmode="numeric" placeholder="••••">
+      <input type="tel" class="pin-mask" pattern="[0-9]*" autocomplete="off" id="su_pin" maxlength="4" inputmode="numeric" placeholder="••••">
 
     </div>
     <div class="error-msg" id="loginError"></div>
