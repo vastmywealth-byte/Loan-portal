@@ -92,12 +92,12 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
 .lender-rank{ width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.08); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:13px; color:var(--text-onnavy-muted); }
 .lender-card:nth-child(1) .lender-rank{ background:linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%); color:var(--ink); }
 .lender-info{ flex:1; min-width:0; }
-.lender-name{ font-family:var(--font-display); font-size:16px; font-weight:700; color:#fff; }
+.lender-name{ font-family:var(--font-display); font-size:14px; font-weight:700; color:#fff; }
 .lender-rate{ font-size:12px; color:var(--text-onnavy-muted); margin-top:2px; }
 .lender-apply{ padding:11px 18px; background:linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%); color:var(--ink); border:none; border-radius:9px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
 .lender-apply:hover{ filter:brightness(1.05); }
 .lender-apply.applied-state{ background:var(--forest); color:#fff; cursor:default; }
-.results-footer{ text-align:center; padding:20px 0 0; font-size:12px; color:var(--text-onnavy-muted); }
+.results-footer{ text-align:center; padding:20px 0 0; font-size:11px; color:var(--text-onnavy-muted); }
 .btn-new-application{ width:100%; padding:15px; margin-top:18px; background:transparent; color:var(--gold-light); border:1.5px solid var(--panel-border); border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
 .btn-new-application:hover{ border-color:var(--gold); }
 .lender-apply:disabled{ cursor:default; opacity:.9; }
@@ -160,6 +160,11 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
           </select>
         </div>
       </div>
+      <div class="field hidden" id="companyNameField">
+        <label>Company / Business Name<span class="req">*</span></label>
+        <input type="text" id="f_companyName" placeholder="Should exactly match name on GST/Udyam certificate">
+      </div>
+
       <div class="field-row hidden" id="personCountField">
         <div class="field">
           <label id="personCountLabel">Number of Partners<span class="req">*</span></label>
@@ -254,7 +259,8 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
     <div class="results-intro"><h1>Your Matched Lenders</h1><p>Based on your profile, here are your best-fit options.</p></div>
     <div class="retry-note">💡 If a lender declines your application — for example, if your pincode isn't serviced by them — simply come back to this page and apply with your next match.</div>
     <div id="lenderCards"></div>
-    <div class="results-footer">Applications with a direct link open in a new tab. For others, we'll forward your application on your behalf.</div>
+    <div class="results-footer">Applications with a direct link open in a new tab.</div>
+
     <button class="btn-new-application" onclick="startNewApplication()">Start a New Application</button>
   </div>
 
@@ -307,6 +313,8 @@ document.querySelectorAll('#empToggle .toggle-btn').forEach(function(btn){
     state.employmentType = btn.dataset.val;
     var isSE = state.employmentType === 'Self-Employed';
     document.getElementById('companyTypeField').classList.toggle('hidden', !isSE);
+    document.getElementById('companyNameField').classList.toggle('hidden', !isSE);
+
     document.getElementById('blOnlyFields1').classList.toggle('hidden', !isSE);
     if (!isSE) {
       document.getElementById('personCountField').classList.add('hidden');
@@ -358,6 +366,8 @@ function renderDocuments(){
     html += '<div class="doc-group-label">Income Proof</div>';
     html += uploadBoxHtml('salarySlips','Salary Slips — last 3 months','JPG, PNG or PDF · multiple files','image/*,.pdf',true);
     html += uploadBoxHtml('bankStatement','Bank Statement — last 6 months','Single PDF file only','application/pdf',false);
+    html += '<div class="hint" style="margin:-4px 0 12px;">📅 Upload your <strong>latest</strong> statement — through yesterday\'s date. Older statements may lead to rejection.</div>';
+
     html += passwordFieldHtml();
     html += '<div class="doc-group-label">Residence Proof</div>';
     html += residenceToggleHtml();
@@ -368,6 +378,8 @@ function renderDocuments(){
     html += uploadBoxHtml('gst','GST Certificate','JPG, PNG or PDF','image/*,.pdf',false);
     html += '<div class="doc-group-label">Bank Statement</div>';
     html += uploadBoxHtml('bankStatement','Current Account Statement — last 6 months','Single PDF file only','application/pdf',false);
+    html += '<div class="hint" style="margin:-4px 0 12px;">📅 Upload your <strong>latest</strong> statement — through yesterday\'s date. Older statements may lead to rejection.</div>';
+
     html += passwordFieldHtml();
     html += '<div class="doc-group-label">Residence Proof</div>';
     html += residenceToggleHtml();
@@ -388,6 +400,8 @@ function renderDocuments(){
     html += uploadBoxHtml('deed', ct === 'LLP' ? 'LLP Agreement' : 'Partnership Deed (CA-attested, <3 months old)','JPG, PNG or PDF','image/*,.pdf',false);
     html += '<div class="doc-group-label">Bank Statement</div>';
     html += uploadBoxHtml('bankStatement','Current Account Statement — last 6 months','Single PDF file only','application/pdf',false);
+    html += '<div class="hint" style="margin:-4px 0 12px;">📅 Upload your <strong>latest</strong> statement — through yesterday\'s date. Older statements may lead to rejection.</div>';
+
     html += passwordFieldHtml();
     html += '<div class="doc-group-label">Residence Proof</div>';
     html += residenceToggleHtml();
@@ -413,6 +427,8 @@ function renderDocuments(){
     html += '<div id="leiFieldWrap" class="hidden field"><label>LEI Number</label><input type="text" id="f_lei" placeholder="20-character LEI code"></div>';
     html += '<div class="doc-group-label">Bank Statement</div>';
     html += uploadBoxHtml('bankStatement','Current Account Statement — last 6 months','Single PDF file only','application/pdf',false);
+    html += '<div class="hint" style="margin:-4px 0 12px;">📅 Upload your <strong>latest</strong> statement — through yesterday\'s date. Older statements may lead to rejection.</div>';
+
     html += passwordFieldHtml();
     html += '<div class="doc-group-label">Residence Proof</div>';
     html += residenceToggleHtml();
@@ -591,13 +607,19 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
   var required = ['f_name','f_mobile','f_email','f_house','f_income','f_loanAmount','f_cibil','f_bounces'];
   if (!state.employmentType) { alert('Please select employment type.'); return; }
   if (state.employmentType === 'Self-Employed') {
-    required.push('f_vintage');
+    required.push('f_vintage', 'f_companyName');
     if (!state.companyType) { alert('Please select type of company.'); return; }
   }
+
   if (state.loanType === 'LAP' || state.loanType === 'HL') required.push('f_propertyAddress','f_propertyPincode','f_marketValue');
 
   var missing = required.filter(function(id){ var el = document.getElementById(id); return el && !el.value.trim(); });
   if (missing.length) { alert('Please complete all required fields.'); return; }
+  var missingDocs = Array.from(document.querySelectorAll('.upload-box')).filter(function(box){
+    return !box.classList.contains('filled');
+  });
+  if (missingDocs.length) { alert('Please upload all required documents before submitting.'); return; }
+
 
   var btn = this;
   btn.disabled = true; btn.textContent = 'Preparing files…';
@@ -611,6 +633,8 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     email: document.getElementById('f_email').value,
     employmentType: state.employmentType,
     companyType: state.companyType || '',
+    companyName: document.getElementById('f_companyName') ? document.getElementById('f_companyName').value : '',
+
     house: document.getElementById('f_house').value,
     monthlyIncome: document.getElementById('f_income').value.replace(/[^0-9.]/g,''),
     existingEmi: (document.getElementById('f_emi').value || '0').replace(/[^0-9.]/g,''),
@@ -675,9 +699,7 @@ function renderResults(data, profile){
     var alreadyApplied = !!lender.alreadyApplied;
     var card = document.createElement('div');
     card.className = 'lender-card' + (alreadyApplied ? ' applied' : '');
-    var btnLabel = alreadyApplied
-      ? (lender.hasUtm ? '✓ Applied' : '✓ Submitted — we will forward this')
-      : 'Apply Now →';
+    var btnLabel = alreadyApplied ? '✓ Applied' : 'Apply Now →';
     card.innerHTML =
       '<div class="lender-rank">'+(idx+1)+'</div>' +
       '<div class="lender-info"><div class="lender-name">'+escapeHtml(lender.name)+'</div>' +
@@ -694,7 +716,8 @@ function renderResults(data, profile){
           '&lenderName=' + encodeURIComponent(lender.name) + '&loanType=' + encodeURIComponent(state.loanType) +
           '&hasUtm=' + (lender.hasUtm ? 'Yes' : 'No')).catch(function(){});
 
-        btn.textContent = lender.hasUtm ? '✓ Applied' : '✓ Submitted — we will forward this';
+        btn.textContent = '✓ Applied';
+
         btn.classList.add('applied-state');
         btn.disabled = true;
         card.classList.add('applied');
