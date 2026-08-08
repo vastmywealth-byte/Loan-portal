@@ -358,9 +358,12 @@ function renderDocuments(){
   var ct = state.companyType;
   var html = '';
 
-  html += '<div class="doc-group-label">Identity</div>';
-  html += uploadBoxHtml('pan','PAN Card','JPG, PNG or PDF','image/*,.pdf',false);
-  html += uploadBoxHtml('aadhar','Aadhaar Card','JPG, PNG or PDF','image/*,.pdf',false);
+  var needsTopLevelIdentity = !isSE || ct === 'Proprietorship';
+  if (needsTopLevelIdentity) {
+    html += '<div class="doc-group-label">Identity</div>';
+    html += uploadBoxHtml('pan','PAN Card','JPG, PNG or PDF','image/*,.pdf',false);
+    html += uploadBoxHtml('aadhar','Aadhaar Card','JPG, PNG or PDF','image/*,.pdf',false);
+  }
 
   if (!isSE) {
     html += '<div class="doc-group-label">Income Proof</div>';
