@@ -680,9 +680,26 @@ partnerCode: partnerCode
       renderResults(data, profile);
     })
     .catch(function(err){
-      document.getElementById('loadingState').style.display = 'block';
-      document.getElementById('loadingState').textContent = 'Connection error: ' + err.message;
+      document.getElementById('loadingState').textContent = 'Connection was slow — checking if your application went through…';
+
+      fetchJsonRetry(BACKEND_URL + '?action=getApplicationStatus&mobile=' + encodeURIComponent(profile.mobile))
+        .then(function(checkData){
+          if (checkData.success && checkData.found) {
+            document.getElementById('loadingState').style.display = 'none';
+            renderResults(checkData, profile);
+          } else {
+            document.getElementById('loadingState').textContent = 'Connection error: ' + err.message + ' — please try again.';
+            btn.disabled = false; btn.textContent = 'Find My Matching Lenders';
+            document.getElementById('formWrap').classList.remove('hidden');
+          }
+        })
+        .catch(function(){
+          document.getElementById('loadingState').textContent = 'Connection error: ' + err.message + ' — please try again.';
+          btn.disabled = false; btn.textContent = 'Find My Matching Lenders';
+          document.getElementById('formWrap').classList.remove('hidden');
+        });
     });
+
 });
 
 function startNewApplication(){
