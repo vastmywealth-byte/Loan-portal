@@ -343,7 +343,9 @@ function submitSignup(){
   })
     .then(function(d){
       if (d.success) {
+        if (typeof fbq === 'function') fbq('track', 'CompleteRegistration');
         sessionStorage.setItem('vmw_mobile', mobile);
+
         sessionStorage.setItem('vmw_email', email);
         sessionStorage.setItem('vmw_flow', 'signup');
         window.location.href = APPLICATION_PAGE;
