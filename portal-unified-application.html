@@ -278,22 +278,22 @@ var partnerCode = new URLSearchParams(window.location.search).get('ref') || '';
    GET calls (status check), never for the file-upload submission,
    to avoid ever creating duplicate Drive folders/leads. */
 function fetchJsonRetry(url, options, attemptsLeft){
-  attemptsLeft = (attemptsLeft === undefined) ? 2 : attemptsLeft;
+  attemptsLeft = (attemptsLeft === undefined) ? 3 : attemptsLeft;
   return fetch(url, options)
     .then(function(r){ return r.text(); })
     .then(function(raw){
       try { return JSON.parse(raw); }
-      catch(e){ throw new Error('Non-JSON response: ' + raw.slice(0,150)); }
+      catch(e){ throw new Error('Non-JSON response: ' + raw.slice(0,120)); }
     })
     .catch(function(err){
       if (attemptsLeft > 1) {
-        return new Promise(function(resolve){ setTimeout(resolve, 900); })
+        var delay = (4 - attemptsLeft) * 1200; // 1200ms, then 2400ms
+        return new Promise(function(resolve){ setTimeout(resolve, delay); })
           .then(function(){ return fetchJsonRetry(url, options, attemptsLeft - 1); });
       }
       throw err;
     });
 }
-
 /* ===== LOAN TYPE TOGGLE ===== */
 document.querySelectorAll('#loanToggle button').forEach(function(btn){
   btn.addEventListener('click', function(){
