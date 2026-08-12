@@ -225,7 +225,7 @@ var APPLICATION_PAGE = "portal-unified-application.html";
    flaky Apps Script responses without risking duplicate submissions
    (only used for lightweight login/signup/status calls, never file uploads). */
 function fetchJsonRetry(url, options, attemptsLeft){
-  attemptsLeft = (attemptsLeft === undefined) ? 2 : attemptsLeft;
+  attemptsLeft = (attemptsLeft === undefined) ? 3 : attemptsLeft;
   return fetch(url, options)
     .then(function(r){ return r.text(); })
     .then(function(raw){
@@ -234,13 +234,13 @@ function fetchJsonRetry(url, options, attemptsLeft){
     })
     .catch(function(err){
       if (attemptsLeft > 1) {
-        return new Promise(function(resolve){ setTimeout(resolve, 900); })
+        var delay = (4 - attemptsLeft) * 1200; // 1200ms, then 2400ms
+        return new Promise(function(resolve){ setTimeout(resolve, delay); })
           .then(function(){ return fetchJsonRetry(url, options, attemptsLeft - 1); });
       }
       throw err;
     });
 }
-
 function showAuth(which){
   switchTab(which);
   document.querySelector('main').scrollIntoView({behavior:'smooth'});
@@ -331,6 +331,28 @@ function submitSignup(){
         sessionStorage.setItem('vmw_email', email);
         sessionStorage.setItem('vmw_flow', 'signup');
         window.location.href = APPLICATION_PAGE;
+      } else if (d.error && d.error.indexOf('already exists') !== -1) {
+        // The first attempt likely succeeded server-side but the response
+        // was lost, causing this retry to correctly report a duplicate.
+        // Try logging in with what they just entered before alarming them.
+        fetchJsonRetry(BACKEND_URL + '?action=loginAccount&mobile=' + encodeURIComponent(mobile) + '&pin=' + encodeURIComponent(pin))
+          .then(function(loginResult){
+            if (loginResult.success) {
+              sessionStorage.setItem('vmw_mobile', mobile);
+              sessionStorage.setItem('vmw_email', email);
+              sessionStorage.setItem('vmw_flow', 'signup');
+              window.location.href = APPLICATION_PAGE;
+            } else {
+              btn.disabled = false; btn.textContent = 'Create Account & Continue';
+              errEl.textContent = 'An account with this number already exists — please use "Track your application" to log in instead.';
+              errEl.classList.add('show');
+            }
+          })
+          .catch(function(){
+            btn.disabled = false; btn.textContent = 'Create Account & Continue';
+            errEl.textContent = 'An account with this number already exists — please use "Track your application" to log in instead.';
+            errEl.classList.add('show');
+          });
       } else {
         btn.disabled = false; btn.textContent = 'Create Account & Continue';
         errEl.textContent = d.error || 'Something went wrong — please try again.';
