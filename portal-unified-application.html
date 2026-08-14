@@ -241,15 +241,9 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
       </div>
     </div>
 
-    <!-- DOCUMENTS -->
-    <div class="section">
-      <div class="section-title">Documents</div>
-      <div id="docContainer"></div>
-
-      <div style="padding-top:8px;">
-        <button class="btn-submit" id="submitBtn">Find My Matching Lenders</button>
-        <div class="trust-note">🔒 Your information and documents are confidential and reviewed only by our underwriting team.</div>
-      </div>
+    <div style="padding-top:8px;">
+      <button class="btn-submit" id="submitBtn">Find My Matching Lenders</button>
+      <div class="trust-note">🔒 We'll match you with lenders first — documents come next.</div>
     </div>
   </div>
 
@@ -261,9 +255,26 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
     <div id="lenderCards"></div>
     <div class="results-footer">Applications with a direct link open in a new tab.</div>
 
-    <button class="btn-new-application" onclick="closeApplication()">Close</button>
+    <div id="resultsActionsPending" class="hidden">
+      <button class="btn-submit" style="margin-top:18px;" onclick="goToDocumentUpload()">Upload Documents Now</button>
+      <button class="btn-new-application" onclick="closeApplication()">I'll Upload Later</button>
+    </div>
+    <div id="resultsActionsSubmitted" class="hidden">
+      <button class="btn-new-application" onclick="closeApplication()">Close</button>
+    </div>
   </div>
 
+  <div class="hidden" id="docWrap">
+    <div class="results-intro"><h1>Upload Your Documents</h1><p>Almost done — upload these to move your application forward.</p></div>
+    <div class="section">
+      <div id="docContainer"></div>
+      <div style="padding-top:8px;">
+        <button class="btn-submit" id="docSubmitBtn">Submit Documents</button>
+        <div class="trust-note">🔒 Your information and documents are confidential and reviewed only by our underwriting team.</div>
+      </div>
+    </div>
+    <button class="btn-new-application" onclick="closeApplication()" style="margin-top:10px;">I'll Upload Later</button>
+  </div>
 </main>
 
 <script>
@@ -571,7 +582,13 @@ function checkReturningUser(){
         if (data.success && data.found) {
           document.getElementById('loadingState').style.display = 'none';
           state.loanType = data.product;
-          renderResults(data, { mobile: mobile });
+          state.leadId = data.leadId;
+          state.profile = { name: data.name || '', mobile: mobile, email: data.email || sessionStorage.getItem('vmw_email') || '' };
+          if (data.documentStatus === 'Pending') {
+            goToDocumentUpload();
+          } else {
+            renderResults(data, { mobile: mobile }, false);
+          }
         } else {
           showNotFound();
         }
@@ -580,8 +597,6 @@ function checkReturningUser(){
         console.error('[track] error:', err);
         showTrackError('Request failed.', err.message);
       });
-  } else {
-    renderDocuments();
   }
 }
 checkReturningUser();
@@ -615,14 +630,71 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     required.push('f_vintage', 'f_companyName');
     if (!state.companyType) { alert('Please select type of company.'); return; }
   }
-
   if (state.loanType === 'LAP' || state.loanType === 'HL') required.push('f_propertyAddress','f_propertyPincode','f_marketValue');
 
   var missing = required.filter(function(id){ var el = document.getElementById(id); return el && !el.value.trim(); });
   if (missing.length) { alert('Please complete all required fields.'); return; }
-  var missingDocs = Array.from(document.querySelectorAll('.upload-box')).filter(function(box){
-    return !box.classList.contains('filled');
-  });
+
+  var btn = this;
+  btn.disabled = true; btn.textContent = 'Matching lenders…';
+  document.getElementById('formWrap').classList.add('hidden');
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('loadingState').textContent = 'Finding your best-fit lenders…';
+
+  var profile = {
+    name: document.getElementById('f_name').value,
+    mobile: document.getElementById('f_mobile').value,
+    email: document.getElementById('f_email').value,
+    employmentType: state.employmentType,
+    companyType: state.companyType || '',
+    companyName: document.getElementById('f_companyName') ? document.getElementById('f_companyName').value : '',
+    house: document.getElementById('f_house').value,
+    monthlyIncome: document.getElementById('f_income').value.replace(/[^0-9.]/g,''),
+    existingEmi: (document.getElementById('f_emi').value || '0').replace(/[^0-9.]/g,''),
+    loanAmount: document.getElementById('f_loanAmount').value,
+    cibilBracket: document.getElementById('f_cibil').value,
+    bounces: document.getElementById('f_bounces').value,
+    enquiries: document.getElementById('f_enquiries').value,
+    vintageYears: state.employmentType === 'Self-Employed' ? document.getElementById('f_vintage').value : '',
+    gstVintage: state.employmentType === 'Self-Employed' ? document.getElementById('f_gstVintage').value : '',
+    udyam: state.employmentType === 'Self-Employed' ? document.getElementById('f_udyam').value : '',
+    bankAccountType: state.employmentType === 'Self-Employed' ? document.getElementById('f_bankAccountType').value : '',
+    propertyAddress: document.getElementById('f_propertyAddress') ? document.getElementById('f_propertyAddress').value : '',
+    propertyPincode: document.getElementById('f_propertyPincode') ? document.getElementById('f_propertyPincode').value : '',
+    marketValue: document.getElementById('f_marketValue') ? document.getElementById('f_marketValue').value : '',
+    partnerCode: partnerCode
+  };
+
+  fetch(BACKEND_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action:'submitProfileOnly', product: state.loanType, profile: profile })
+  })
+    .then(function(r){ return r.text(); })
+    .then(function(raw){
+      var data;
+      try { data = JSON.parse(raw); }
+      catch(e){ throw new Error('Backend did not return JSON. Raw: ' + raw.slice(0,150)); }
+      document.getElementById('loadingState').style.display = 'none';
+      if (!data.success) {
+        document.getElementById('loadingState').style.display = 'block';
+        document.getElementById('loadingState').textContent = 'Error: ' + (data.error || 'Unknown error') + ' — please try again.';
+        btn.disabled = false; btn.textContent = 'Find My Matching Lenders';
+        document.getElementById('formWrap').classList.remove('hidden');
+        return;
+      }
+      state.leadId = data.leadId;
+      state.profile = profile;
+      sessionStorage.setItem('vmw_lead_id', data.leadId);
+      sessionStorage.setItem('vmw_lead_product', state.loanType);
+      if (typeof fbq === 'function') fbq('track', 'Lead', { content_name: state.loanType });
+      renderResults(data, profile, true);
+    })
+    .catch(function(err){
+      document.getElementById('loadingState').textContent = 'Connection error: ' + err.message + ' — please try again.';
+      btn.disabled = false; btn.textContent = 'Find My Matching Lenders';
+      document.getElementById('formWrap').classList.remove('hidden');
+    });
+});
   if (missingDocs.length) { alert('Please upload all required documents before submitting.'); return; }
 
 
@@ -717,9 +789,56 @@ function closeApplication(){
   sessionStorage.removeItem('vmw_mobile');
   sessionStorage.removeItem('vmw_email');
   sessionStorage.removeItem('vmw_flow');
+  sessionStorage.removeItem('vmw_lead_id');
+  sessionStorage.removeItem('vmw_lead_product');
   window.location.href = HOME_PAGE;
 }
-function renderResults(data, profile){
+function goToDocumentUpload(){
+  document.getElementById('resultsWrap').classList.add('hidden');
+  document.getElementById('docWrap').classList.remove('hidden');
+  renderDocuments();
+}
+
+document.getElementById('docSubmitBtn').addEventListener('click', async function(){
+  var missingDocs = Array.from(document.querySelectorAll('.upload-box')).filter(function(box){
+    return !box.classList.contains('filled');
+  });
+  if (missingDocs.length) { alert('Please upload all required documents before submitting.'); return; }
+
+  var btn = this;
+  btn.disabled = true; btn.textContent = 'Preparing files…';
+
+  var profile = Object.assign({}, state.profile || {}, {
+    stmtPassword: document.getElementById('f_stmtPassword') ? document.getElementById('f_stmtPassword').value : ''
+  });
+
+  var files = await buildFilesPayload();
+  btn.textContent = 'Uploading documents…';
+
+  fetch(BACKEND_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action:'uploadDocuments', leadId: state.leadId, product: state.loanType, profile: profile, files: files })
+  })
+    .then(function(r){ return r.text(); })
+    .then(function(raw){
+      var data;
+      try { data = JSON.parse(raw); }
+      catch(e){ throw new Error('Non-JSON response: ' + raw.slice(0,150)); }
+      if (data.success) {
+        document.getElementById('docWrap').innerHTML =
+          '<div class="results-intro"><h1>✅ Documents Received</h1><p>Our team will review your application shortly.</p></div>' +
+          '<button class="btn-new-application" onclick="closeApplication()">Close</button>';
+      } else {
+        btn.disabled = false; btn.textContent = 'Submit Documents';
+        alert('Error: ' + (data.error || 'Unknown error') + ' — please try again.');
+      }
+    })
+    .catch(function(err){
+      btn.disabled = false; btn.textContent = 'Submit Documents';
+      alert('Connection error — please try again. (' + err.message + ')');
+    });
+});
+  function renderResults(data, profile, showUploadPrompt){
   var container = document.getElementById('lenderCards');
   container.innerHTML = '';
 
@@ -756,8 +875,9 @@ function renderResults(data, profile){
   });
 
   document.getElementById('resultsWrap').classList.remove('hidden');
+  document.getElementById('resultsActionsPending').classList.toggle('hidden', !showUploadPrompt);
+  document.getElementById('resultsActionsSubmitted').classList.toggle('hidden', !!showUploadPrompt);
 }
-
 function escapeHtml(s){ var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 </script>
   <!-- Meta Pixel Code -->
