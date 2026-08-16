@@ -583,8 +583,14 @@ function checkReturningUser(){
           document.getElementById('loadingState').style.display = 'none';
           state.loanType = data.product;
           state.leadId = data.leadId;
+          state.employmentType = data.employmentType || null;
+          state.companyType = data.companyType || null;
           state.profile = { name: data.name || '', mobile: mobile, email: data.email || sessionStorage.getItem('vmw_email') || '' };
           if (data.documentStatus === 'Pending') {
+            if (data.personCount) {
+              var pc = document.getElementById('f_personCount');
+              if (pc) pc.value = data.personCount;
+            }
             goToDocumentUpload();
           } else {
             renderResults(data, { mobile: mobile }, false);
@@ -662,6 +668,7 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     propertyAddress: document.getElementById('f_propertyAddress') ? document.getElementById('f_propertyAddress').value : '',
     propertyPincode: document.getElementById('f_propertyPincode') ? document.getElementById('f_propertyPincode').value : '',
     marketValue: document.getElementById('f_marketValue') ? document.getElementById('f_marketValue').value : '',
+    personCount: document.getElementById('f_personCount') ? document.getElementById('f_personCount').value : '',
     partnerCode: partnerCode
   };
 
