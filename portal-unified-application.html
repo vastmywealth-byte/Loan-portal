@@ -583,6 +583,9 @@ function checkReturningUser(){
           document.getElementById('loadingState').style.display = 'none';
           state.loanType = data.product;
           state.leadId = data.leadId;
+            state.employmentType = data.employmentType || '';
+            state.companyType = data.companyType || '';
+
           state.employmentType = data.employmentType || null;
           state.companyType = data.companyType || null;
           state.profile = { name: data.name || '', mobile: mobile, email: data.email || sessionStorage.getItem('vmw_email') || '' };
@@ -725,10 +728,14 @@ function goToDocumentUpload(){
 }
 
 document.getElementById('docSubmitBtn').addEventListener('click', async function(){
-  var missingDocs = Array.from(document.querySelectorAll('.upload-box')).filter(function(box){
-    return !box.classList.contains('filled');
-  });
+  var allBoxes = Array.from(document.querySelectorAll('.upload-box'));
+  if (allBoxes.length === 0) {
+    alert('Document checklist failed to load — please refresh and try again.');
+    return;
+  }
+  var missingDocs = allBoxes.filter(function(box){ return !box.classList.contains('filled'); });
   if (missingDocs.length) { alert('Please upload all required documents before submitting.'); return; }
+
 
   var btn = this;
   btn.disabled = true; btn.textContent = 'Preparing files…';
