@@ -101,6 +101,12 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
 .btn-new-application{ width:100%; padding:15px; margin-top:18px; background:transparent; color:var(--gold-light); border:1.5px solid var(--panel-border); border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
 .btn-new-application:hover{ border-color:var(--gold); }
 .lender-apply:disabled{ cursor:default; opacity:.9; }
+  .status-badge{ font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; white-space:nowrap; margin-left:8px; }
+.status-badge.process{ background:rgba(217,169,78,.15); color:var(--gold-light); }
+.status-badge.approved{ background:rgba(63,190,134,.15); color:var(--forest); }
+.status-badge.disbursed{ background:rgba(127,176,255,.15); color:#7FB0FF; }
+.status-badge.rejected{ background:rgba(228,119,107,.15); color:var(--rust); }
+.lender-info{ display:flex; flex-direction:column; }
 .loading{ text-align:center; padding:60px 20px; color:var(--text-onnavy-muted); font-size:14px; }
 
 /* ===== TRACKING DIAGNOSTIC BANNER ===== */
@@ -765,16 +771,24 @@ document.getElementById('docSubmitBtn').addEventListener('click', async function
   function renderResults(data, profile, showUploadPrompt){
   var container = document.getElementById('lenderCards');
   container.innerHTML = '';
-
   data.lenders.forEach(function(lender, idx){
     var alreadyApplied = !!lender.alreadyApplied;
     var card = document.createElement('div');
     card.className = 'lender-card' + (alreadyApplied ? ' applied' : '');
     var btnLabel = alreadyApplied ? '✓ Applied' : 'Apply Now →';
+
+    var statusHtml = '';
+    if (alreadyApplied && lender.status) {
+      var statusClassMap = { 'In Process':'process', 'Approved':'approved', 'Disbursed':'disbursed', 'Rejected':'rejected' };
+      var sClass = statusClassMap[lender.status] || 'process';
+      statusHtml = '<span class="status-badge ' + sClass + '">' + escapeHtml(lender.status) + '</span>';
+    }
+
     card.innerHTML =
       '<div class="lender-rank">'+(idx+1)+'</div>' +
       '<div class="lender-info"><div class="lender-name">'+escapeHtml(lender.name)+'</div>' +
-      (lender.rateBand ? '<div class="lender-rate">'+escapeHtml(lender.rateBand)+'</div>' : '') + '</div>' +
+      (lender.rateBand ? '<div class="lender-rate">'+escapeHtml(lender.rateBand)+'</div>' : '') +
+      statusHtml + '</div>' +
       '<button class="lender-apply'+(alreadyApplied ? ' applied-state' : '')+'"'+(alreadyApplied ? ' disabled' : '')+'>'+btnLabel+'</button>';
 
     var btn = card.querySelector('.lender-apply');
