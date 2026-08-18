@@ -611,7 +611,61 @@ state.companyType = data.companyType || null;
       });
   }
 }
-checkReturningUser();
+(function initEntry(){
+  var flow = sessionStorage.getItem('vmw_flow');
+  var mobile = sessionStorage.getItem('vmw_mobile');
+  if (flow === 'login' && mobile) {
+    checkReturningUser();
+  } else if (localStorage.getItem('vmw_lead_id')) {
+    resumeFromLocalLead();
+  }
+})();
+
+function resumeFromLocalLead(){
+  var leadId = localStorage.getItem('vmw_lead_id');
+  var product = localStorage.getItem('vmw_lead_product');
+  if (!leadId || !product) return;
+
+  document.getElementById('formWrap').classList.add('hidden');
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('loadingState').textContent = 'Resuming your application…';
+
+  fetchJsonRetry(BACKEND_URL + '?action=resumeApplication&leadId=' + encodeURIComponent(leadId) + '&product=' + encodeURIComponent(product))
+    .then(function(data){
+      if (data.success && data.found) {
+        document.getElementById('loadingState').style.display = 'none';
+        state.loanType = data.product;
+        state.leadId = data.leadId;
+        state.employmentType = data.employmentType || null;
+        state.companyType = data.companyType || null;
+        state.profile = { name: data.name || '', mobile: data.mobile || '', email: data.email || '' };
+        if (data.documentStatus === 'Pending') {
+          if (data.personCount) {
+            var pc = document.getElementById('f_personCount');
+            if (pc) pc.value = data.personCount;
+          }
+          goToDocumentUpload();
+        } else {
+          localStorage.removeItem('vmw_lead_id');
+          localStorage.removeItem('vmw_lead_product');
+          document.getElementById('formWrap').classList.remove('hidden');
+          renderDocuments();
+        }
+      } else if (data.allocated) {
+        showTrackError('Application already being processed', data.error);
+      } else {
+        localStorage.removeItem('vmw_lead_id');
+        localStorage.removeItem('vmw_lead_product');
+        document.getElementById('formWrap').classList.remove('hidden');
+        renderDocuments();
+      }
+    })
+    .catch(function(){
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('formWrap').classList.remove('hidden');
+      renderDocuments();
+    });
+}
 
 /* ===== SUBMIT ===== */
 function fileToBase64(file){
@@ -696,8 +750,8 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
       }
       state.leadId = data.leadId;
       state.profile = profile;
-      sessionStorage.setItem('vmw_lead_id', data.leadId);
-      sessionStorage.setItem('vmw_lead_product', state.loanType);
+            localStorage.setItem('vmw_lead_id', data.leadId);
+      localStorage.setItem('vmw_lead_product', state.loanType);
       if (typeof fbq === 'function') fbq('track', 'Lead', { content_name: state.loanType });
       renderResults(data, profile, true);
     })
@@ -719,11 +773,9 @@ function closeApplication(){
   sessionStorage.removeItem('vmw_mobile');
   sessionStorage.removeItem('vmw_email');
   sessionStorage.removeItem('vmw_flow');
-  sessionStorage.removeItem('vmw_lead_id');
-  sessionStorage.removeItem('vmw_lead_product');
   window.location.href = HOME_PAGE;
 }
-function goToDocumentUpload(){
+  function goToDocumentUpload(){
   document.getElementById('resultsWrap').classList.add('hidden');
   document.getElementById('docWrap').classList.remove('hidden');
   renderDocuments();
@@ -754,7 +806,9 @@ document.getElementById('docSubmitBtn').addEventListener('click', async function
       var data;
       try { data = JSON.parse(raw); }
       catch(e){ throw new Error('Non-JSON response: ' + raw.slice(0,150)); }
-      if (data.success) {
+            if (data.success) {
+        localStorage.removeItem('vmw_lead_id');
+        localStorage.removeItem('vmw_lead_product');
         document.getElementById('docWrap').innerHTML =
           '<div class="results-intro"><h1>✅ Documents Received</h1><p>Our team will review your application shortly.</p></div>' +
           '<button class="btn-new-application" onclick="closeApplication()">Close</button>';
