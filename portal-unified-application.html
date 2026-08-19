@@ -612,20 +612,21 @@ state.companyType = data.companyType || null;
   }
 }
 (function initEntry(){
+  var urlLeadId = new URLSearchParams(window.location.search).get('leadId');
+  var urlProduct = new URLSearchParams(window.location.search).get('product');
   var flow = sessionStorage.getItem('vmw_flow');
   var mobile = sessionStorage.getItem('vmw_mobile');
-  if (flow === 'login' && mobile) {
+
+  if (urlLeadId && urlProduct) {
+    resumeFromLocalLead(urlLeadId, urlProduct);
+  } else if (flow === 'login' && mobile) {
     checkReturningUser();
   } else if (localStorage.getItem('vmw_lead_id')) {
-    resumeFromLocalLead();
+    resumeFromLocalLead(localStorage.getItem('vmw_lead_id'), localStorage.getItem('vmw_lead_product'));
   }
 })();
-
-function resumeFromLocalLead(){
-  var leadId = localStorage.getItem('vmw_lead_id');
-  var product = localStorage.getItem('vmw_lead_product');
+function resumeFromLocalLead(leadId, product){
   if (!leadId || !product) return;
-
   document.getElementById('formWrap').classList.add('hidden');
   document.getElementById('loadingState').style.display = 'block';
   document.getElementById('loadingState').textContent = 'Resuming your application…';
