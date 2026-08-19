@@ -782,6 +782,38 @@ function closeApplication(){
   renderDocuments();
 }
 
+// Uploads a single file with up to 2 retries — safe to retry because
+// it only ever appends one file, never re-creates the whole application.
+function uploadOneFile(key, file, attemptsLeft){
+  attemptsLeft = (attemptsLeft === undefined) ? 3 : attemptsLeft;
+  return fileToBase64(file).then(function(base64){
+    return fetch(BACKEND_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'uploadSingleDocument',
+        leadId: state.leadId,
+        product: state.loanType,
+        mobile: (state.profile && state.profile.mobile) || '',
+        fileKey: key,
+        file: { name: file.name, mimeType: file.type, base64: base64 }
+      })
+    })
+    .then(function(r){ return r.text(); })
+    .then(function(raw){
+      var data;
+      try { data = JSON.parse(raw); } catch(e){ throw new Error('Non-JSON response'); }
+      if (!data.success) throw new Error(data.error || 'Upload failed');
+      return true;
+    });
+  }).catch(function(err){
+    if (attemptsLeft > 1) {
+      return new Promise(function(resolve){ setTimeout(resolve, 1500); })
+        .then(function(){ return uploadOneFile(key, file, attemptsLeft - 1); });
+    }
+    throw err;
+  });
+}
+
 document.getElementById('docSubmitBtn').addEventListener('click', async function(){
   var missingDocs = Array.from(document.querySelectorAll('.upload-box')).filter(function(box){
     return !box.classList.contains('filled');
@@ -789,25 +821,55 @@ document.getElementById('docSubmitBtn').addEventListener('click', async function
   if (missingDocs.length) { alert('Please upload all required documents before submitting.'); return; }
 
   var btn = this;
-  btn.disabled = true; btn.textContent = 'Preparing files…';
+  btn.disabled = true;
 
   var profile = Object.assign({}, state.profile || {}, {
     stmtPassword: document.getElementById('f_stmtPassword') ? document.getElementById('f_stmtPassword').value : ''
   });
 
-  var files = await buildFilesPayload();
-  btn.textContent = 'Uploading documents…';
+  // Flatten state.uploadedFiles (some keys hold arrays, e.g. salarySlips) into a single file list.
+  var jobs = [];
+  Object.keys(state.uploadedFiles).forEach(function(key){
+    var val = state.uploadedFiles[key];
+    if (Array.isArray(val)) {
+      val.forEach(function(f, idx){ jobs.push({ key: key + '_' + idx, file: f }); });
+    } else {
+      jobs.push({ key: key, file: val });
+    }
+  });
 
+  var total = jobs.length;
+  var done = 0;
+  var failedKeys = [];
+
+  for (var i = 0; i < jobs.length; i++) {
+    btn.textContent = 'Uploading ' + (i+1) + ' of ' + total + '…';
+    try {
+      await uploadOneFile(jobs[i].key, jobs[i].file);
+      done++;
+    } catch (e) {
+      failedKeys.push(jobs[i].key);
+    }
+  }
+
+  if (failedKeys.length > 0) {
+    btn.disabled = false;
+    btn.textContent = 'Retry Failed Uploads';
+    alert('These files could not be uploaded, please try again: ' + failedKeys.join(', '));
+    return;
+  }
+
+  btn.textContent = 'Finishing up…';
   fetch(BACKEND_URL, {
     method: 'POST',
-    body: JSON.stringify({ action:'uploadDocuments', leadId: state.leadId, product: state.loanType, profile: profile, files: files })
+    body: JSON.stringify({ action:'finalizeDocumentUpload', leadId: state.leadId, product: state.loanType, profile: profile })
   })
     .then(function(r){ return r.text(); })
     .then(function(raw){
       var data;
       try { data = JSON.parse(raw); }
       catch(e){ throw new Error('Non-JSON response: ' + raw.slice(0,150)); }
-            if (data.success) {
+      if (data.success) {
         localStorage.removeItem('vmw_lead_id');
         localStorage.removeItem('vmw_lead_product');
         document.getElementById('docWrap').innerHTML =
