@@ -402,15 +402,22 @@ function renderDocuments(){
   var ct = state.companyType;
   var html = '';
 
-    var needsTopLevelIdentity = !isSE || ct === 'Proprietorship';
+      var needsTopLevelIdentity = !isSE || ct === 'Proprietorship';
   if (needsTopLevelIdentity) {
     html += '<div class="doc-group-label">Identity</div>';
-    html += uploadBoxHtml('pan','PAN Card','JPG, PNG or PDF','image/*,.pdf',false);
-    html += uploadBoxHtml('aadhar','Aadhaar Card','JPG, PNG or PDF','image/*,.pdf',false);
     if (!isSE) {
+      html += uploadBoxHtml('pan','PAN Card','JPG, PNG or PDF','image/*,.pdf',false);
+      html += uploadBoxHtml('aadhar','Aadhaar Card','JPG, PNG or PDF','image/*,.pdf',false);
       html += uploadBoxHtml('selfieApplicant','Your Selfie / Photo','Clear face photo — JPG or PNG','image/*',false);
     } else if (ct === 'Proprietorship') {
+      html += '<div class="doc-group-label" style="margin-top:0;padding-top:0;border-top:none;">Applicant</div>';
+      html += uploadBoxHtml('pan','Applicant PAN Card','JPG, PNG or PDF','image/*,.pdf',false);
+      html += uploadBoxHtml('aadhar','Applicant Aadhaar Card','JPG, PNG or PDF','image/*,.pdf',false);
       html += uploadBoxHtml('selfieApplicant','Applicant Selfie / Photo','Clear face photo — JPG or PNG','image/*',false);
+
+      html += '<div class="doc-group-label">Co-Applicant</div>';
+      html += uploadBoxHtml('panCoApplicant','Co-Applicant PAN Card','JPG, PNG or PDF','image/*,.pdf',false);
+      html += uploadBoxHtml('aadharCoApplicant','Co-Applicant Aadhaar Card','JPG, PNG or PDF','image/*,.pdf',false);
       html += uploadBoxHtml('selfieCoApplicant','Co-Applicant Selfie / Photo','Clear face photo — JPG or PNG','image/*',false);
     }
   }
