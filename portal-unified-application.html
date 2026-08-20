@@ -402,13 +402,18 @@ function renderDocuments(){
   var ct = state.companyType;
   var html = '';
 
-  var needsTopLevelIdentity = !isSE || ct === 'Proprietorship';
+    var needsTopLevelIdentity = !isSE || ct === 'Proprietorship';
   if (needsTopLevelIdentity) {
     html += '<div class="doc-group-label">Identity</div>';
     html += uploadBoxHtml('pan','PAN Card','JPG, PNG or PDF','image/*,.pdf',false);
     html += uploadBoxHtml('aadhar','Aadhaar Card','JPG, PNG or PDF','image/*,.pdf',false);
+    if (!isSE) {
+      html += uploadBoxHtml('selfieApplicant','Your Selfie / Photo','Clear face photo — JPG or PNG','image/*',false);
+    } else if (ct === 'Proprietorship') {
+      html += uploadBoxHtml('selfieApplicant','Applicant Selfie / Photo','Clear face photo — JPG or PNG','image/*',false);
+      html += uploadBoxHtml('selfieCoApplicant','Co-Applicant Selfie / Photo','Clear face photo — JPG or PNG','image/*',false);
+    }
   }
-
   if (!isSE) {
     html += '<div class="doc-group-label">Income Proof</div>';
     html += uploadBoxHtml('salarySlips','Salary Slips — last 3 months','JPG, PNG or PDF · multiple files','image/*,.pdf',true);
@@ -437,8 +442,9 @@ function renderDocuments(){
     html += '<div class="doc-group-label">Partner KYC</div>';
     for (var i=1; i<=count; i++) {
       html += '<div class="person-block"><div class="person-block-title">Partner '+i+'</div>';
-      html += uploadBoxHtml('partnerPan_'+i,'PAN Card','JPG, PNG or PDF','image/*,.pdf',false);
+            html += uploadBoxHtml('partnerPan_'+i,'PAN Card','JPG, PNG or PDF','image/*,.pdf',false);
       html += uploadBoxHtml('partnerAadhar_'+i,'Aadhaar Card','JPG, PNG or PDF','image/*,.pdf',false);
+      html += uploadBoxHtml('partnerSelfie_'+i,'Partner '+i+' Selfie / Photo','Clear face photo — JPG or PNG','image/*',false);
       html += '</div>';
     }
     html += '<div class="doc-group-label">Business Registration</div>';
@@ -459,8 +465,9 @@ function renderDocuments(){
     html += '<div class="doc-group-label">Director KYC</div>';
     for (var d=1; d<=dcount; d++) {
       html += '<div class="person-block"><div class="person-block-title">Director '+d+'</div>';
-      html += uploadBoxHtml('directorPan_'+d,'PAN Card','JPG, PNG or PDF','image/*,.pdf',false);
+            html += uploadBoxHtml('directorPan_'+d,'PAN Card','JPG, PNG or PDF','image/*,.pdf',false);
       html += uploadBoxHtml('directorAadhar_'+d,'Aadhaar Card','JPG, PNG or PDF','image/*,.pdf',false);
+      html += uploadBoxHtml('directorSelfie_'+d,'Director '+d+' Selfie / Photo','Clear face photo — JPG or PNG','image/*',false);
       html += '</div>';
     }
     html += '<div class="doc-group-label">Company Registration</div>';
