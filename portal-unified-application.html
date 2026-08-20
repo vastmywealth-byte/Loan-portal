@@ -39,6 +39,8 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
   font-family:var(--font-body); font-size:13px; font-weight:700; color:var(--text-onnavy-muted); cursor:pointer; transition:all .15s;
 }
 .loan-toggle button.active{ border-color:var(--gold); background:linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%); color:var(--ink); }
+.loan-toggle button:disabled{ opacity:.35; cursor:not-allowed; }
+.loan-toggle-hint{ font-size:11.5px; color:var(--text-onnavy-muted); text-align:center; margin:-12px 0 20px; }
 
 .section{ background:var(--panel); border:1px solid var(--panel-border); border-radius:var(--radius); padding:22px 20px; margin-bottom:16px; box-shadow:0 8px 24px rgba(0,0,0,.2); }
 .section-title{ font-family:var(--font-display); font-size:15px; font-weight:700; margin-bottom:16px; color:#fff; }
@@ -132,13 +134,13 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
   <div class="hidden" id="trackErrorWrap"></div>
 
   <div id="formWrap">
-    <div class="loan-toggle" id="loanToggle">
+        <div class="loan-toggle" id="loanToggle">
       <button type="button" class="active" data-val="PL">💰 Personal Loan</button>
       <button type="button" data-val="BL">💼 Business Loan</button>
       <button type="button" data-val="HL">🏠 Home Loan</button>
       <button type="button" data-val="LAP">🏢 Loan Against Property</button>
     </div>
-
+    <div class="loan-toggle-hint">💡 Personal Loan is for Salaried applicants · Business Loan is for Self-Employed applicants</div>
     <!-- BASIC DETAILS -->
     <div class="section">
       <div class="section-title">Basic Details</div>
@@ -324,6 +326,23 @@ document.querySelectorAll('#loanToggle button').forEach(function(btn){
   });
 });
 
+/* ===== PL = Salaried only, BL = Self-Employed only (does not affect HL/LAP) ===== */
+function syncLoanToggleAvailability(){
+  var plBtn = document.querySelector('#loanToggle button[data-val="PL"]');
+  var blBtn = document.querySelector('#loanToggle button[data-val="BL"]');
+  if (!plBtn || !blBtn) return;
+  if (state.employmentType === 'Self-Employed') {
+    plBtn.disabled = true; blBtn.disabled = false;
+  } else if (state.employmentType === 'Salaried') {
+    plBtn.disabled = false; blBtn.disabled = true;
+  } else {
+    plBtn.disabled = false; blBtn.disabled = false;
+  }
+  document.querySelectorAll('#loanToggle button').forEach(function(b){
+    b.classList.toggle('active', b.dataset.val === state.loanType);
+  });
+}
+
 /* ===== EMPLOYMENT TOGGLE ===== */
 document.querySelectorAll('#empToggle .toggle-btn').forEach(function(btn){
   btn.addEventListener('click', function(){
@@ -340,11 +359,17 @@ document.querySelectorAll('#empToggle .toggle-btn').forEach(function(btn){
       document.getElementById('f_companyType').value = '';
       state.companyType = null;
     }
+
+    // PL is Salaried-only, BL is Self-Employed-only
+    if (state.loanType === 'PL' || state.loanType === 'BL') {
+      state.loanType = isSE ? 'BL' : 'PL';
+    }
+    syncLoanToggleAvailability();
+
     updateIncomeLabel();
     renderDocuments();
   });
 });
-
 document.getElementById('f_companyType').addEventListener('change', function(){
   state.companyType = this.value;
   var needsCount = this.value === 'Partnership' || this.value === 'LLP' || this.value === 'Pvt Ltd';
@@ -564,9 +589,9 @@ function showNotFound(){
 function showFormManually(){
   document.getElementById('trackErrorWrap').classList.add('hidden');
   document.getElementById('formWrap').classList.remove('hidden');
+  syncLoanToggleAvailability();
   renderDocuments();
 }
-
 function checkReturningUser(){
   var flow = sessionStorage.getItem('vmw_flow');
   var mobile = sessionStorage.getItem('vmw_mobile');
@@ -640,8 +665,8 @@ function resumeFromLocalLead(leadId, product){
         state.employmentType = data.employmentType || null;
         state.companyType = data.companyType || null;
         state.profile = { name: data.name || '', mobile: data.mobile || '', email: data.email || '' };
-        if (data.documentStatus === 'Pending') {
-          if (data.personCount) {
+                if (data.documentStatus === 'Pending') {
+            if (data.personCount) {
             var pc = document.getElementById('f_personCount');
             if (pc) pc.value = data.personCount;
           }
@@ -650,6 +675,7 @@ function resumeFromLocalLead(leadId, product){
           localStorage.removeItem('vmw_lead_id');
           localStorage.removeItem('vmw_lead_product');
           document.getElementById('formWrap').classList.remove('hidden');
+          syncLoanToggleAvailability();
           renderDocuments();
         }
       } else if (data.allocated) {
