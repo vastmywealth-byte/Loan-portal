@@ -519,22 +519,67 @@ function wireSimpleToggle(container, onSelect){
   });
 }
 
+function isSelfieKey(key){
+  return key === 'selfieApplicant' || key === 'selfieCoApplicant' ||
+    key.indexOf('partnerSelfie_') === 0 || key.indexOf('directorSelfie_') === 0;
+}
+
+// Shrinks a selfie photo to a reasonable max dimension + JPEG quality
+// client-side, before it's ever uploaded — keeps the face clearly
+// recognizable while cutting typical phone-camera file sizes drastically.
+// Falls back to the original file untouched if anything goes wrong.
+function compressImageFile(file, maxDimension, quality){
+  return new Promise(function(resolve){
+    if (!file.type || file.type.indexOf('image/') !== 0) { resolve(file); return; }
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var scale = Math.min(1, maxDimension / Math.max(img.width, img.height));
+        var w = Math.round(img.width * scale);
+        var h = Math.round(img.height * scale);
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob(function(blob){
+          if (!blob) { resolve(file); return; }
+          resolve(new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type:'image/jpeg' }));
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = function(){ resolve(file); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ resolve(file); };
+    reader.readAsDataURL(file);
+  });
+}
+
 function wireUploadBoxes(){
   document.querySelectorAll('.upload-box input[type=file]').forEach(function(input){
     input.addEventListener('change', function(){
       var key = this.dataset.key;
       var box = document.getElementById('box_'+key);
-      if (!this.files || !this.files.length) return;
+      var inputEl = this;
+      if (!inputEl.files || !inputEl.files.length) return;
 
-      if (key === 'bankStatement' && this.files[0].type !== 'application/pdf') {
+      if (key === 'bankStatement' && inputEl.files[0].type !== 'application/pdf') {
         alert('Bank statement must be a single PDF file.');
-        this.value = ''; return;
+        inputEl.value = ''; return;
       }
 
-      box.classList.add('filled');
-      box.querySelector('.upload-sub').textContent = Array.prototype.map.call(this.files, function(f){ return f.name; }).join(', ');
-      box.querySelector('.upload-icon').textContent = '✓';
-      state.uploadedFiles[key] = this.files.length > 1 ? Array.from(this.files) : this.files[0];
+      var filesArr = Array.from(inputEl.files);
+      var ready = isSelfieKey(key)
+        ? Promise.all(filesArr.map(function(f){ return compressImageFile(f, 1280, 0.75); }))
+        : Promise.resolve(filesArr);
+
+      box.querySelector('.upload-sub').textContent = 'Processing…';
+
+      ready.then(function(processedFiles){
+        box.classList.add('filled');
+        box.querySelector('.upload-sub').textContent = processedFiles.map(function(f){ return f.name; }).join(', ');
+        box.querySelector('.upload-icon').textContent = '✓';
+        state.uploadedFiles[key] = processedFiles.length > 1 ? processedFiles : processedFiles[0];
+      });
     });
   });
 }
