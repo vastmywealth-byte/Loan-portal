@@ -128,7 +128,11 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
     <div class="logo-text">VastMyWealth<span class="script">Digital</span></div>
   </div>
 </header>
-
+<div class="hidden" id="bounceGateBackdrop" style="position:fixed;inset:0;background:rgba(6,12,28,.75);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--panel);border:1px solid var(--panel-border);border-radius:var(--radius);padding:24px 20px;max-width:420px;width:100%;">
+    <div id="bounceGateContent"></div>
+  </div>
+</div>
 <main>
 
   <div class="hidden" id="trackErrorWrap"></div>
@@ -342,7 +346,61 @@ function syncLoanToggleAvailability(){
     b.classList.toggle('active', b.dataset.val === state.loanType);
   });
 }
-
+function checkBounceEligibilityGate(){
+  var cibilEl = document.getElementById('f_cibil');
+  var bouncesEl = document.getElementById('f_bounces');
+  if (!cibilEl || !bouncesEl) return;
+  var cibil = cibilEl.value, bounces = bouncesEl.value;
+  if ((state.loanType === 'PL' || state.loanType === 'BL') && cibil === '650-699' && bounces && bounces !== 'No') {
+    showBounceClearedModal();
+  }
+}
+function showBounceClearedModal(){
+  document.getElementById('bounceGateContent').innerHTML =
+    '<h3 style="color:#fff;margin-bottom:10px;">Quick check</h3>' +
+    '<p style="color:var(--text-onnavy-muted);margin-bottom:18px;">Have you cleared your recent bounces?</p>' +
+    '<button class="btn-submit" style="margin-bottom:10px;" onclick="bounceClearedYes()">Yes, cleared</button>' +
+    '<button class="btn-new-application" onclick="bounceClearedNo()">Not yet</button>';
+  document.getElementById('bounceGateBackdrop').classList.remove('hidden');
+}
+function closeBounceGate(){ document.getElementById('bounceGateBackdrop').classList.add('hidden'); }
+function bounceClearedYes(){ closeBounceGate(); } // real Bounces value untouched, normal flow continues
+function bounceClearedNo(){
+  var productLabel = state.loanType === 'PL' ? 'Personal Loan' : 'Business Loan';
+  document.getElementById('bounceGateContent').innerHTML =
+    '<h3 style="color:#fff;margin-bottom:10px;">Try a Loan Against Property instead?</h3>' +
+    '<p style="color:var(--text-onnavy-muted);margin-bottom:18px;">You may not be eligible for a ' + productLabel + ' due to recent bounces. A Loan Against Property may still work.</p>' +
+    '<button class="btn-submit" style="margin-bottom:10px;" onclick="switchToLapFromGate()">Switch to LAP</button>' +
+    '<button class="btn-new-application" onclick="declineLapFromGate()">No, I\'ll wait</button>';
+}
+function switchToLapFromGate(){
+  closeBounceGate();
+  document.querySelector('#loanToggle button[data-val="LAP"]').click(); // reuses your existing toggle logic untouched
+}
+function declineLapFromGate(){ closeBounceGate(); submitIneligibleLead(); }
+function submitIneligibleLead(){
+  var name = document.getElementById('f_name').value;
+  var mobile = document.getElementById('f_mobile').value;
+  var email = document.getElementById('f_email').value;
+  if (!name || !mobile || !email) { alert('Please fill your name, mobile and email first.'); return; }
+  var profile = {
+    name: name, mobile: mobile, email: email,
+    employmentType: state.employmentType || '',
+    cibilBracket: document.getElementById('f_cibil').value,
+    bounces: document.getElementById('f_bounces').value
+  };
+  fetch(BACKEND_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action:'submitIneligibleLead', product: state.loanType, profile: profile, partnerCode: partnerCode })
+  }).then(function(r){ return r.text(); }).then(function(){
+    document.getElementById('formWrap').classList.add('hidden');
+    document.getElementById('loadingState').style.display = 'block';
+    document.getElementById('loadingState').innerHTML =
+      '<div class="results-intro"><h1>We\'ve saved your details</h1>' +
+      '<p>Once your bounces are cleared, check your WhatsApp for your login details — or log in anytime with your mobile number.</p></div>' +
+      '<button class="btn-new-application" onclick="closeApplication()">Close</button>';
+  }).catch(function(){ alert('Something went wrong, please try again.'); });
+}
 /* ===== EMPLOYMENT TOGGLE ===== */
 document.querySelectorAll('#empToggle .toggle-btn').forEach(function(btn){
   btn.addEventListener('click', function(){
@@ -804,8 +862,8 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     monthlyIncome: document.getElementById('f_income').value.replace(/[^0-9.]/g,''),
     existingEmi: (document.getElementById('f_emi').value || '0').replace(/[^0-9.]/g,''),
     loanAmount: document.getElementById('f_loanAmount').value,
-    cibilBracket: document.getElementById('f_cibil').value,
-    bounces: document.getElementById('f_bounces').value,
+    cibilBracket: document.getElementById('f_cibil').addEventListener('change', checkBounceEligibilityGate);
+    bounces: document.getElementById('f_bounces').addEventListener('change', checkBounceEligibilityGate);
     enquiries: document.getElementById('f_enquiries').value,
     vintageYears: state.employmentType === 'Self-Employed' ? document.getElementById('f_vintage').value : '',
     gstVintage: state.employmentType === 'Self-Employed' ? document.getElementById('f_gstVintage').value : '',
