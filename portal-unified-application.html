@@ -378,6 +378,8 @@ function switchToLapFromGate(){
   document.querySelector('#loanToggle button[data-val="LAP"]').click(); // reuses your existing toggle logic untouched
 }
 function declineLapFromGate(){ closeBounceGate(); submitIneligibleLead(); }
+  document.getElementById('f_cibil').addEventListener('change', checkBounceEligibilityGate);
+document.getElementById('f_bounces').addEventListener('change', checkBounceEligibilityGate);
 function submitIneligibleLead(){
   var name = document.getElementById('f_name').value;
   var mobile = document.getElementById('f_mobile').value;
@@ -861,9 +863,9 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     house: document.getElementById('f_house').value,
     monthlyIncome: document.getElementById('f_income').value.replace(/[^0-9.]/g,''),
     existingEmi: (document.getElementById('f_emi').value || '0').replace(/[^0-9.]/g,''),
-    loanAmount: document.getElementById('f_loanAmount').value,
-    cibilBracket: document.getElementById('f_cibil').addEventListener('change', checkBounceEligibilityGate);
-    bounces: document.getElementById('f_bounces').addEventListener('change', checkBounceEligibilityGate);
+        loanAmount: document.getElementById('f_loanAmount').value,
+    cibilBracket: document.getElementById('f_cibil').value,
+    bounces: document.getElementById('f_bounces').value,
     enquiries: document.getElementById('f_enquiries').value,
     vintageYears: state.employmentType === 'Self-Employed' ? document.getElementById('f_vintage').value : '',
     gstVintage: state.employmentType === 'Self-Employed' ? document.getElementById('f_gstVintage').value : '',
