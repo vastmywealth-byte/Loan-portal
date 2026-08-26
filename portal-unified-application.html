@@ -237,7 +237,7 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
       </div>
       <div class="field-row">
         <div class="field"><label>Bounces (last 6 months)<span class="req">*</span></label>
-          <div class="select-wrap"><select id="f_bounces"><option value="">Select</option><option value="No">No</option><option value="1-2">1–2</option><option value="More than 2">More than 2</option></select></div>
+          <select id="f_bounces"><option value="">Select</option><option value="No">No</option><option value="1-2">1–2</option></select></div>
         </div>
         <div class="field"><label>Enquiries (last 3 months)</label><input type="text" id="f_enquiries" inputmode="numeric"></div>
       </div>
@@ -347,11 +347,10 @@ function syncLoanToggleAvailability(){
   });
 }
 function checkBounceEligibilityGate(){
-  var cibilEl = document.getElementById('f_cibil');
   var bouncesEl = document.getElementById('f_bounces');
-  if (!cibilEl || !bouncesEl) return;
-  var cibil = cibilEl.value, bounces = bouncesEl.value;
-  if ((state.loanType === 'PL' || state.loanType === 'BL') && cibil === '650-699' && bounces && bounces !== 'No') {
+  if (!bouncesEl) return;
+  var bounces = bouncesEl.value;
+  if ((state.loanType === 'PL' || state.loanType === 'BL') && bounces && bounces !== 'No') {
     showBounceClearedModal();
   }
 }
