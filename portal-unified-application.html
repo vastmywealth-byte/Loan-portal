@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Apply for a Loan — VastMyWealth Digital</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -717,9 +719,11 @@ function checkReturningUser(){
   console.log('[track] flow=', flow, 'mobile=', mobile);
 
   if (flow === 'login' && mobile) {
-    document.getElementById('formWrap').classList.add('hidden');
+        document.getElementById('formWrap').classList.add('hidden');
+    document.getElementById('submitBtn').parentElement.style.display = 'none'; // Forces the button and lock text to hide
     document.getElementById('loadingState').style.display = 'block';
-    document.getElementById('loadingState').textContent = 'Fetching your application status…';
+    document.getElementById('loadingState').textContent = 'Resuming application connecting to servers will take a min';
+
 
     fetchJsonRetry(BACKEND_URL + '?action=getApplicationStatus&mobile=' + encodeURIComponent(mobile))
       .then(function(data){
@@ -770,9 +774,11 @@ state.companyType = data.companyType || null;
 })();
 function resumeFromLocalLead(leadId, product){
   if (!leadId || !product) return;
-  document.getElementById('formWrap').classList.add('hidden');
+    document.getElementById('formWrap').classList.add('hidden');
+  document.getElementById('submitBtn').parentElement.style.display = 'none'; // Forces the button and lock text to hide
   document.getElementById('loadingState').style.display = 'block';
-  document.getElementById('loadingState').textContent = 'Resuming your application…';
+  document.getElementById('loadingState').textContent = 'Resuming application connecting to servers will take a min';
+
 
   fetchJsonRetry(BACKEND_URL + '?action=resumeApplication&leadId=' + encodeURIComponent(leadId) + '&product=' + encodeURIComponent(product))
     .then(function(data){
