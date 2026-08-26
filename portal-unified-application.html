@@ -781,42 +781,44 @@ function resumeFromLocalLead(leadId, product){
 
   fetchJsonRetry(BACKEND_URL + '?action=resumeApplication&leadId=' + encodeURIComponent(leadId) + '&product=' + encodeURIComponent(product))
     .then(function(data){
+      document.getElementById('loadingState').style.display = 'none';
+
       if (data.success && data.found) {
-        document.getElementById('loadingState').style.display = 'none';
         state.loanType = data.product;
         state.leadId = data.leadId;
         state.employmentType = data.employmentType || null;
         state.companyType = data.companyType || null;
         state.profile = { name: data.name || '', mobile: data.mobile || '', email: data.email || '' };
 
-        if (String(data.documentStatus).toLowerCase() === 'submitted') {
-          // Documents already submitted: Show confirmation screen directly
-          document.getElementById('docWrap').classList.remove('hidden');
-          document.getElementById('docWrap').innerHTML =
-            '<div class="results-intro"><h1>✅ Documents Already Received</h1>' +
-            '<p>The documents for this application (' + (data.name ? data.name + ' - ' : '') + data.product + ') have already been received and are under review by our underwriting team.</p></div>' +
-            '<button class="btn-new-application" onclick="closeApplication()">Close</button>';
-        } else if (data.documentStatus === 'Pending') {
+        if (data.documentStatus === 'Pending') {
+          // Still waiting on documents — send them to the upload screen
           if (data.personCount) {
             var pc = document.getElementById('f_personCount');
             if (pc) pc.value = data.personCount;
           }
           goToDocumentUpload();
         } else {
-          localStorage.removeItem('vmw_lead_id');
-          localStorage.removeItem('vmw_lead_product');
-          document.getElementById('formWrap').classList.remove('hidden');
-          document.getElementById('submitBtn').parentElement.style.display = 'block';
-          syncLoanToggleAvailability();
-          renderDocuments();
+          // Catch ALL other statuses (Submitted, Verified, Approved, etc.)
+          document.getElementById('docWrap').classList.remove('hidden');
+          document.getElementById('docWrap').innerHTML =
+            '<div class="results-intro"><h1>✅ Application Under Review</h1>' +
+            '<p>The documents for this application (' + (data.name ? data.name + ' - ' : '') + data.product + ') have been received and are currently being processed by our team.</p></div>' +
+            '<button class="btn-new-application" onclick="closeApplication()">Close</button>';
         }
       } else if (data.allocated) {
-        showTrackError('Application already being processed', data.error);
+        // If the admin already assigned it to a DSA, show the Under Review screen instead of an error!
+        document.getElementById('docWrap').classList.remove('hidden');
+        document.getElementById('docWrap').innerHTML =
+          '<div class="results-intro"><h1>✅ Application Under Review</h1>' +
+          '<p>This application has been successfully assigned to our processing team and is under review.</p></div>' +
+          '<button class="btn-new-application" onclick="closeApplication()">Close</button>';
       } else {
+        // Failsafe: Real network error or lead completely missing
         localStorage.removeItem('vmw_lead_id');
         localStorage.removeItem('vmw_lead_product');
         document.getElementById('formWrap').classList.remove('hidden');
         document.getElementById('submitBtn').parentElement.style.display = 'block';
+        syncLoanToggleAvailability();
         renderDocuments();
       }
     })
@@ -827,6 +829,7 @@ function resumeFromLocalLead(leadId, product){
       renderDocuments();
     });
 }
+
 
 
 /* ===== SUBMIT ===== */
