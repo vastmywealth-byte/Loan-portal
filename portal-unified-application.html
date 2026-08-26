@@ -774,11 +774,10 @@ state.companyType = data.companyType || null;
 })();
 function resumeFromLocalLead(leadId, product){
   if (!leadId || !product) return;
-    document.getElementById('formWrap').classList.add('hidden');
-  document.getElementById('submitBtn').parentElement.style.display = 'none'; // Forces the button and lock text to hide
+  document.getElementById('formWrap').classList.add('hidden');
+  document.getElementById('submitBtn').parentElement.style.display = 'none';
   document.getElementById('loadingState').style.display = 'block';
   document.getElementById('loadingState').textContent = 'Resuming application connecting to servers will take a min';
-
 
   fetchJsonRetry(BACKEND_URL + '?action=resumeApplication&leadId=' + encodeURIComponent(leadId) + '&product=' + encodeURIComponent(product))
     .then(function(data){
@@ -789,8 +788,16 @@ function resumeFromLocalLead(leadId, product){
         state.employmentType = data.employmentType || null;
         state.companyType = data.companyType || null;
         state.profile = { name: data.name || '', mobile: data.mobile || '', email: data.email || '' };
-                if (data.documentStatus === 'Pending') {
-            if (data.personCount) {
+
+        if (String(data.documentStatus).toLowerCase() === 'submitted') {
+          // Documents already submitted: Show confirmation screen directly
+          document.getElementById('docWrap').classList.remove('hidden');
+          document.getElementById('docWrap').innerHTML =
+            '<div class="results-intro"><h1>✅ Documents Already Received</h1>' +
+            '<p>The documents for this application (' + (data.name ? data.name + ' - ' : '') + data.product + ') have already been received and are under review by our underwriting team.</p></div>' +
+            '<button class="btn-new-application" onclick="closeApplication()">Close</button>';
+        } else if (data.documentStatus === 'Pending') {
+          if (data.personCount) {
             var pc = document.getElementById('f_personCount');
             if (pc) pc.value = data.personCount;
           }
@@ -799,6 +806,7 @@ function resumeFromLocalLead(leadId, product){
           localStorage.removeItem('vmw_lead_id');
           localStorage.removeItem('vmw_lead_product');
           document.getElementById('formWrap').classList.remove('hidden');
+          document.getElementById('submitBtn').parentElement.style.display = 'block';
           syncLoanToggleAvailability();
           renderDocuments();
         }
@@ -808,15 +816,18 @@ function resumeFromLocalLead(leadId, product){
         localStorage.removeItem('vmw_lead_id');
         localStorage.removeItem('vmw_lead_product');
         document.getElementById('formWrap').classList.remove('hidden');
+        document.getElementById('submitBtn').parentElement.style.display = 'block';
         renderDocuments();
       }
     })
     .catch(function(){
       document.getElementById('loadingState').style.display = 'none';
       document.getElementById('formWrap').classList.remove('hidden');
+      document.getElementById('submitBtn').parentElement.style.display = 'block';
       renderDocuments();
     });
 }
+
 
 /* ===== SUBMIT ===== */
 function fileToBase64(file){
