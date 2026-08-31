@@ -145,6 +145,8 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
       <button type="button" data-val="BL">💼 Business Loan</button>
       <button type="button" data-val="HL">🏠 Home Loan</button>
       <button type="button" data-val="LAP">🏢 Loan Against Property</button>
+      <button type="button" data-val="VL">🚗 Vehicle Loan</button>
+      <button type="button" data-val="EL">🎓 Education Loan</button>
     </div>
     <div class="loan-toggle-hint">💡 Personal Loan is for Salaried applicants · Business Loan is for Self-Employed applicants</div>
     <!-- BASIC DETAILS -->
@@ -320,18 +322,28 @@ function fetchJsonRetry(url, options, attemptsLeft){
     });
 }
 /* ===== LOAN TYPE TOGGLE ===== */
+var VL_EL_REDIRECT_URL = "https://loan.vastmywealth.com/vl-el-application.html";
+
 document.querySelectorAll('#loanToggle button').forEach(function(btn){
   btn.addEventListener('click', function(){
+    var chosen = btn.dataset.val;
+
+    if (chosen === 'VL' || chosen === 'EL') {
+      var target = VL_EL_REDIRECT_URL + "?product=" + encodeURIComponent(chosen);
+      if (partnerCode) target += "&ref=" + encodeURIComponent(partnerCode);
+      window.location.href = target;
+      return;
+    }
+
     document.querySelectorAll('#loanToggle button').forEach(function(b){ b.classList.remove('active'); });
     btn.classList.add('active');
-    state.loanType = btn.dataset.val;
+    state.loanType = chosen;
     var isSecured = state.loanType === 'LAP' || state.loanType === 'HL';
     document.getElementById('propertySection').classList.toggle('hidden', !isSecured);
     updateIncomeLabel();
     renderDocuments();
   });
 });
-
 /* ===== PL = Salaried only, BL = Self-Employed only (does not affect HL/LAP) ===== */
 function syncLoanToggleAvailability(){
   var plBtn = document.querySelector('#loanToggle button[data-val="PL"]');
