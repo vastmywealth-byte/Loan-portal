@@ -422,6 +422,34 @@ document.getElementById('docSubmitBtn').addEventListener('click', async function
     btn.disabled = false; btn.textContent = 'Submit Documents';
   });
 });
+  (function initVlElEntry(){
+  var urlLeadId = params.get('leadId');
+  if (!urlLeadId) return;
+  document.getElementById('formWrap').classList.add('hidden');
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('loadingState').textContent = 'Resuming your application…';
+  fetch(BACKEND_URL + '?action=resumeVlElApplication&leadId=' + encodeURIComponent(urlLeadId) + '&product=' + encodeURIComponent(product))
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      document.getElementById('loadingState').style.display = 'none';
+      if (data.success && data.found) {
+        state.leadId = data.leadId;
+        if (data.vehicleCondition) state.vehicleCondition = data.vehicleCondition;
+        renderDocuments();
+        if (String(data.documentStatus).toUpperCase() === 'SUBMITTED') {
+          document.getElementById('doneWrap').classList.remove('hidden');
+        } else {
+          goToDocumentUpload();
+        }
+      } else {
+        document.getElementById('formWrap').classList.remove('hidden');
+      }
+    })
+    .catch(function(){
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('formWrap').classList.remove('hidden');
+    });
+})();
 </script>
 </body>
 </html>
