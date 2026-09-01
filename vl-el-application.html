@@ -236,6 +236,7 @@ function renderDocuments(){
     html += uploadBoxHtml('aadhar','Aadhaar Card','JPG, PNG or PDF','image/*,.pdf',false);
     html += uploadBoxHtml('selfie','Selfie / Photo','Clear face photo','image/*',false);
     html += uploadBoxHtml('bankStatement','Bank Statement — last 6 months','Single PDF','application/pdf',false);
+    html += '<div class="field"><label>Bank Statement PDF Password (if any)</label><input type="password" id="docStmtPassword" placeholder="Leave blank if not password-protected"></div>';
     if (state.vehicleCondition === 'New') {
       html += uploadBoxHtml('vehicleQuotation','Vehicle Quotation / Proforma Invoice','JPG, PNG or PDF','image/*,.pdf',false);
     } else if (state.vehicleCondition === 'Used') {
@@ -271,13 +272,13 @@ function wireUploadBoxes(){
 renderDocuments();
 
 function fileToBase64(file){
-  return new Promise(function(resolve){
+  return new Promise(function(resolve, reject){
     var reader = new FileReader();
     reader.onload = function(){ resolve(reader.result.split(',')[1]); };
+    reader.onerror = function(){ reject(new Error('Could not read file: ' + file.name)); };
     reader.readAsDataURL(file);
   });
 }
-
 document.getElementById('submitBtn').addEventListener('click', function(){
   var profile = {};
   if (product === 'VL') {
@@ -370,30 +371,55 @@ function wireUploadBoxesIn(container){
 }
 
 document.getElementById('docSubmitBtn').addEventListener('click', async function(){
+  var missingDocs = Array.from(document.querySelectorAll('#docContainer2 .upload-box')).filter(function(box){
+    return !box.classList.contains('filled');
+  });
+  if (missingDocs.length) { alert('Please upload all required documents before submitting.'); return; }
+
   var btn = this;
   btn.disabled = true;
   var keys = Object.keys(state.uploadedFiles);
+  var failedKeys = [];
+
   for (var i = 0; i < keys.length; i++) {
     btn.textContent = 'Uploading ' + (i+1) + ' of ' + keys.length + '…';
     var file = state.uploadedFiles[keys[i]];
-    var base64 = await fileToBase64(file);
-    await fetch(BACKEND_URL, {
-      method:'POST',
-      body: JSON.stringify({
-        action:'uploadSingleDocument', leadId: state.leadId, product: product,
-        fileKey: keys[i], file: { name:file.name, mimeType:file.type, base64: base64 }
-      })
-    }).catch(function(){});
+    try {
+      var base64 = await fileToBase64(file);
+      var res = await fetch(BACKEND_URL, {
+        method:'POST',
+        body: JSON.stringify({
+          action:'vlElUploadSingleDocument', leadId: state.leadId, product: product,
+          fileKey: keys[i], file: { name:file.name, mimeType:file.type, base64: base64 }
+        })
+      });
+      var data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Upload failed');
+    } catch (err) {
+      failedKeys.push(keys[i]);
+    }
   }
+
+  if (failedKeys.length > 0) {
+    btn.disabled = false;
+    btn.textContent = 'Retry Failed Uploads';
+    alert('These files could not be uploaded, please try again: ' + failedKeys.join(', '));
+    return;
+  }
+
+  btn.textContent = 'Finishing up…';
+  var pwEl = document.getElementById('docContainer2').querySelector('input[type=password]');
+  var stmtPassword = pwEl ? pwEl.value : '';
+
   fetch(BACKEND_URL, {
     method:'POST',
-    body: JSON.stringify({ action:'finalizeDocumentUpload', leadId: state.leadId, product: product, profile:{} })
+    body: JSON.stringify({ action:'vlElFinalizeDocumentUpload', leadId: state.leadId, product: product, stmtPassword: stmtPassword })
   }).then(function(){
     document.getElementById('docWrap').classList.add('hidden');
     document.getElementById('doneWrap').classList.remove('hidden');
   }).catch(function(){
-    document.getElementById('docWrap').classList.add('hidden');
-    document.getElementById('doneWrap').classList.remove('hidden');
+    alert('Connection error while finishing up — please try again.');
+    btn.disabled = false; btn.textContent = 'Submit Documents';
   });
 });
 </script>
