@@ -159,6 +159,7 @@ pre.output{
 <script>
 // ⚠️ Update this to your actual customer-facing application form filename
 const APPLY_FORM_URL = "portal-unified-application.html";
+const VL_EL_FORM_URL = "https://loan.vastmywealth.com/vl-el-application.html"; // ⚠️ required, e.g. "vl-el-application.html"
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGTSTzKTJYrhx2wP3UuBPG_64g-ZczNPhem3-PfcPPu8AYQaT0MvSgz1FsyRdoonVndg/exec";
 
 const partnerCode = localStorage.getItem('vmw_partner_code');
@@ -218,8 +219,10 @@ async function loadLeads() {
         let html = '<table><thead><tr><th>Date</th><th>Customer</th><th>Mobile</th><th>Product</th><th>Category</th><th>Status</th><th></th></tr></thead><tbody>';
     data.leads.forEach(l => {
       const date = new Date(l.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+            const isVlEl = (l.product === 'VL' || l.product === 'EL');
+      const formUrlForLead = isVlEl ? VL_EL_FORM_URL : APPLY_FORM_URL;
       const uploadLink = (l.documentStatus === 'Pending' && l.leadId)
-        ? '<a href="' + APPLY_FORM_URL + '?leadId=' + encodeURIComponent(l.leadId) + '&product=' + encodeURIComponent(l.product) + '" target="_blank" style="color:var(--gold-300); font-weight:700; font-size:12.5px; white-space:nowrap;">Upload Docs</a>'
+        ? '<a href="' + formUrlForLead + '?leadId=' + encodeURIComponent(l.leadId) + '&product=' + encodeURIComponent(l.product) + '" target="_blank" style="color:var(--gold-300); font-weight:700; font-size:12.5px; white-space:nowrap;">Upload Docs</a>'
         : '';
       html += '<tr>' +
         '<td>' + date + '</td>' +
