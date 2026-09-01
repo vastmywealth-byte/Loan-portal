@@ -137,13 +137,13 @@ pre.output{
     <h2 id="welcomeMsg">Welcome</h2>
     <p class="sub" id="codeMsg"></p>
 
-    <label>Your referral link</label>
+        <label>Your referral link</label>
     <div class="linkbox">
       <span id="refLink"></span>
       <button id="copyBtn">Copy</button>
     </div>
     <div class="hint">Share this with customers — applications they submit through it are automatically logged under your name.</div>
-
+    <button class="btn" id="openLinkBtn" style="margin-top:10px;">Open My Application Link</button>
     <div style="margin-top:32px;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
         <label style="margin-bottom:0;">Your applications</label>
@@ -182,7 +182,9 @@ document.getElementById('copyBtn').addEventListener('click', () => {
     setTimeout(() => { btn.textContent = original; }, 1500);
   });
 });
-
+document.getElementById('openLinkBtn').addEventListener('click', () => {
+  window.open(referralLink, '_blank');
+});
 document.getElementById('logoutBtn').addEventListener('click', () => {
   localStorage.removeItem('vmw_partner_code');
   localStorage.removeItem('vmw_partner_name');
