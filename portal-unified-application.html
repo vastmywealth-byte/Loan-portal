@@ -286,14 +286,26 @@ main{ max-width:680px; margin:0 auto; padding:24px 20px 0; }
       <div id="docContainer"></div>
       <div style="padding-top:8px;">
         <button class="btn-submit" id="docSubmitBtn">Submit Documents</button>
+        <a id="waDocLink" href="#" target="_blank" style="text-decoration:none;">
+          <button type="button" class="btn-new-application" style="margin-top:10px;">💬 Send Documents via WhatsApp Instead</button>
+        </a>
         <div class="trust-note">🔒 Your information and documents are confidential and reviewed only by our underwriting team.</div>
       </div>
     </div>
+
     <button class="btn-new-application" onclick="closeApplication()" style="margin-top:10px;">I'll Upload Later</button>
   </div>
 </main>
 
 <script>
+  var WA_NUMBER = "919594592020"; // ⚠️ set your actual WhatsApp number here
+function buildWhatsAppLink(){
+  var name = (state.profile && state.profile.name) || (document.getElementById('f_name') ? document.getElementById('f_name').value : '') || '';
+  var ref = state.leadId || '';
+  var text = 'Docs for: ' + name + (ref ? (' | Ref: ' + ref) : '');
+  return 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(text);
+}
+
   /* ⚠️ Update this if your landing/home page has a different filename */
 var HOME_PAGE = "index.html";
 var BACKEND_URL = "https://script.google.com/macros/s/AKfycbwGTSTzKTJYrhx2wP3UuBPG_64g-ZczNPhem3-PfcPPu8AYQaT0MvSgz1FsyRdoonVndg/exec";
@@ -956,7 +968,10 @@ function closeApplication(){
   document.getElementById('resultsWrap').classList.add('hidden');
   document.getElementById('docWrap').classList.remove('hidden');
   renderDocuments();
+  var waLink = document.getElementById('waDocLink');
+  if (waLink) waLink.href = buildWhatsAppLink();
 }
+
 
 // Uploads a single file with up to 2 retries — safe to retry because
 // it only ever appends one file, never re-creates the whole application.
