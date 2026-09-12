@@ -161,6 +161,11 @@ pre.output{
 const APPLY_FORM_URL = "portal-unified-application.html";
 const VL_EL_FORM_URL = "https://loan.vastmywealth.com/vl-el-application.html"; // ⚠️ required, e.g. "vl-el-application.html"
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGTSTzKTJYrhx2wP3UuBPG_64g-ZczNPhem3-PfcPPu8AYQaT0MvSgz1FsyRdoonVndg/exec";
+const WA_NUMBER = "91XXXXXXXXXX"; // ⚠️ same number as the customer portal
+function buildPartnerWhatsAppLink(l){
+  var text = 'Docs for: ' + (l.customerName || '') + ' | Ref: ' + (l.leadId || '');
+  return 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(text);
+}
 
 const partnerCode = localStorage.getItem('vmw_partner_code');
 const partnerName = localStorage.getItem('vmw_partner_name');
@@ -222,8 +227,10 @@ async function loadLeads() {
             const isVlEl = (l.product === 'VL' || l.product === 'EL');
       const formUrlForLead = isVlEl ? VL_EL_FORM_URL : APPLY_FORM_URL;
       const uploadLink = (l.documentStatus === 'Pending' && l.leadId)
-        ? '<a href="' + formUrlForLead + '?leadId=' + encodeURIComponent(l.leadId) + '&product=' + encodeURIComponent(l.product) + '" target="_blank" style="color:var(--gold-300); font-weight:700; font-size:12.5px; white-space:nowrap;">Upload Docs</a>'
+        ? '<a href="' + formUrlForLead + '?leadId=' + encodeURIComponent(l.leadId) + '&product=' + encodeURIComponent(l.product) + '" target="_blank" style="color:var(--gold-300); font-weight:700; font-size:12.5px; white-space:nowrap;">Upload Docs</a>' +
+          '<br><a href="' + buildPartnerWhatsAppLink(l) + '" target="_blank" style="color:#5FD3A0; font-weight:700; font-size:12.5px; white-space:nowrap;">💬 WhatsApp</a>'
         : '';
+
             html += '<tr>' +
         '<td>' + date + '</td>' +
         '<td>' + (l.customerName || '—') + '</td>' +
